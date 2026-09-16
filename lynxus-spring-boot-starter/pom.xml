@@ -55,6 +55,12 @@
             <scope>test</scope>
         </dependency>
 
+        <dependency>
+            <groupId>io.github.lynxus</groupId>
+            <artifactId>lynxus-processor</artifactId>
+            <scope>test</scope>
+        </dependency>
+
         <!-- MySQL (optional) -->
         <dependency>
             <groupId>com.mysql</groupId>
@@ -75,15 +81,6 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
-                <configuration>
-                    <annotationProcessorPaths>
-                        <path>
-                            <groupId>io.github.lynxus</groupId>
-                            <artifactId>lynxus-processor</artifactId>
-                            <version>${project.version}</version>
-                        </path>
-                    </annotationProcessorPaths>
-                </configuration>
             </plugin>
         </plugins>
     </build>

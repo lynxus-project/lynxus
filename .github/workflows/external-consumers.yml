@@ -78,3 +78,30 @@ jobs:
           mvn --batch-mode --no-transfer-progress
           -pl lynxus-spring-boot-starter -am
           -Dspring-boot.version=${{ matrix.spring-boot-version }} test
+
+  spring-boot-4-e2e:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+          cache: maven
+      - name: Install Lynxus Processor
+        run: mvn --batch-mode --no-transfer-progress -DskipTests -pl lynxus-processor -am install
+      - name: Install Lynxus Starter
+        run: mvn --batch-mode --no-transfer-progress -DskipTests -pl lynxus-spring-boot-starter -am install
+      - name: Run independent Spring Boot 4 E2E
+        run: >-
+          mvn --batch-mode --no-transfer-progress
+          -f lynxus-examples/external-spring-boot-consumer/pom.xml
+          -Dspring-boot.version=4.1.1
+          -Dtest=ConsumerApplicationE2ETest
+          clean verify
+      - name: Run Spring Boot 4 multi-DataSource context test
+        run: >-
+          mvn --batch-mode --no-transfer-progress
+          -f lynxus-examples/multi-datasource-spring-boot/pom.xml
+          -Dspring-boot.version=4.1.1
+          clean verify

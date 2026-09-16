@@ -39,6 +39,18 @@ class PackageDataSourceBindingTest {
     }
 
     @Test
+    void ignoresMapperImplementationWithoutProcessorMetadata() {
+        contextRunner
+            .withPropertyValues(bindings(
+                "io.github.lynxus.spring.boot.invalid", "usersDataSource"))
+            .run(context -> {
+                assertNull(context.getStartupFailure());
+                assertTrue(context.getBeansOfType(Object.class).keySet().stream()
+                    .noneMatch(name -> name.contains("invalidMapper")));
+            });
+    }
+
+    @Test
     void mapperBindingDoesNotExposeBeanNamePrefix() {
         assertFalse(Arrays.stream(LynxusProperties.MapperBinding.class.getMethods())
             .anyMatch(method -> method.getName().equals("getBeanNamePrefix")

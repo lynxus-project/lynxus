@@ -16,6 +16,7 @@ import javax.lang.model.util.Elements;
 import javax.lang.model.util.Types;
 import javax.tools.Diagnostic;
 import javax.tools.JavaFileObject;
+import javax.tools.StandardLocation;
 import java.io.IOException;
 import java.io.Writer;
 import java.util.Comparator;
@@ -120,6 +121,10 @@ public class LynxusProcessor extends AbstractProcessor {
             try (Writer writer = builderFile.openWriter()) {
                 writer.write(javaCode);
             }
+            writeMapperMetadata(
+                qualifiedClassName,
+                mapperInterface.getQualifiedName().toString(),
+                packageName);
             
             messager.printMessage(Diagnostic.Kind.NOTE, 
                 "Generated zero-reflection mapper: " + qualifiedClassName);
@@ -128,6 +133,20 @@ public class LynxusProcessor extends AbstractProcessor {
             messager.printMessage(Diagnostic.Kind.ERROR,
                 "Failed to compile mapper implementation: " + e.getMessage(),
                 e.element() != null ? e.element() : mapperInterface);
+        }
+    }
+
+    private void writeMapperMetadata(
+            String implementationClass,
+            String mapperInterface,
+            String mapperPackage) throws IOException {
+        String resourceName = "META-INF/lynxus/mappers/" + implementationClass + ".properties";
+        var resource = filer.createResource(StandardLocation.CLASS_OUTPUT, "", resourceName);
+        try (Writer writer = resource.openWriter()) {
+            writer.write("schema-version=1\n");
+            writer.write("implementation-class=" + implementationClass + "\n");
+            writer.write("mapper-interface=" + mapperInterface + "\n");
+            writer.write("mapper-package=" + mapperPackage + "\n");
         }
     }
 }

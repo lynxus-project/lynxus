@@ -12,18 +12,27 @@ import org.springframework.beans.factory.BeanDefinitionStoreException;
 import org.springframework.boot.context.properties.bind.Binder;
 import org.springframework.boot.context.properties.bind.Bindable;
 import org.springframework.context.EnvironmentAware;
-import org.springframework.context.annotation.ClassPathScanningCandidateComponentProvider;
 import org.springframework.core.env.Environment;
-import org.springframework.core.type.filter.TypeFilter;
 import org.springframework.util.ClassUtils;
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
+import org.springframework.core.io.support.ResourcePatternResolver;
 
 import java.beans.Introspector;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Modifier;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Properties;
 
 final class GeneratedMapperBeanDefinitionRegistrar
         implements BeanDefinitionRegistryPostProcessor, EnvironmentAware {
+
+    private static final String MAPPER_METADATA_PATTERN =
+        "classpath*:/META-INF/lynxus/mappers/*.properties";
+    private static final String SCHEMA_VERSION = "1";
 
     private Environment environment;
 
@@ -41,8 +50,9 @@ final class GeneratedMapperBeanDefinitionRegistrar
             )
             .orElse(List.of());
         validateBindings(registry, bindings);
+        List<MapperMetadata> mapperMetadata = discoverMapperMetadata();
         for (LynxusProperties.MapperBinding binding : bindings) {
-            registerGeneratedMappers(registry, binding);
+            registerGeneratedMappers(registry, binding, mapperMetadata);
         }
     }
 
@@ -52,37 +62,32 @@ final class GeneratedMapperBeanDefinitionRegistrar
 
     private void registerGeneratedMappers(
             BeanDefinitionRegistry registry,
-            LynxusProperties.MapperBinding binding) {
+            LynxusProperties.MapperBinding binding,
+            List<MapperMetadata> mapperMetadata) {
         String executorBeanName = registerExecutor(registry, binding.getDataSource());
-        ClassPathScanningCandidateComponentProvider scanner =
-            new ClassPathScanningCandidateComponentProvider(false, environment) {
-                @Override
-                protected boolean isCandidateComponent(
-                        org.springframework.beans.factory.annotation.AnnotatedBeanDefinition beanDefinition) {
-                    return beanDefinition.getMetadata().isIndependent()
-                        && beanDefinition.getMetadata().isConcrete();
-                }
-            };
-        TypeFilter generatedMapperFilter = (metadataReader, metadataReaderFactory) ->
-            metadataReader.getClassMetadata().getClassName().endsWith("MapperImpl");
-        scanner.addIncludeFilter(generatedMapperFilter);
-
-        for (BeanDefinition candidate : scanner.findCandidateComponents(binding.getPackageName())) {
-            registerGeneratedMapper(registry, candidate.getBeanClassName(), binding, executorBeanName);
+        for (MapperMetadata metadata : mapperMetadata) {
+            if (matchesPackage(binding.getPackageName(), metadata.mapperPackage())) {
+                registerGeneratedMapper(registry, metadata, executorBeanName);
+            }
         }
     }
 
     private void registerGeneratedMapper(
             BeanDefinitionRegistry registry,
-            String className,
-            LynxusProperties.MapperBinding binding,
+            MapperMetadata metadata,
             String executorBeanName) {
+        String className = metadata.implementationClass();
         try {
             Class<?> implementationClass = ClassUtils.forName(className, ClassUtils.getDefaultClassLoader());
             Class<?> mapperInterface = findMapperInterface(implementationClass);
             if (mapperInterface == null) {
                 throw new BeanDefinitionStoreException(
                     "Invalid generated Lynxus mapper " + className + ": no @Mapper interface is implemented");
+            }
+            if (!mapperInterface.getName().equals(metadata.mapperInterface())) {
+                throw new BeanDefinitionStoreException(
+                    "Invalid generated Lynxus mapper metadata for " + className
+                        + ": mapper-interface does not match the generated class");
             }
             if (!hasSqlExecutorConstructor(implementationClass)) {
                 throw new BeanDefinitionStoreException(
@@ -105,6 +110,47 @@ final class GeneratedMapperBeanDefinitionRegistrar
         } catch (ClassNotFoundException e) {
             throw new IllegalStateException("Failed to load generated Lynxus mapper " + className, e);
         }
+    }
+
+    private List<MapperMetadata> discoverMapperMetadata() {
+        ResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
+        try {
+            Resource[] resources = resolver.getResources(MAPPER_METADATA_PATTERN);
+            List<MapperMetadata> metadata = new ArrayList<>(resources.length);
+            for (Resource resource : resources) {
+                metadata.add(readMapperMetadata(resource));
+            }
+            return List.copyOf(metadata);
+        } catch (IOException exception) {
+            throw new BeanDefinitionStoreException(
+                "Failed to discover Lynxus Mapper metadata", exception);
+        }
+    }
+
+    private MapperMetadata readMapperMetadata(Resource resource) throws IOException {
+        Properties properties = new Properties();
+        try (InputStream input = resource.getInputStream()) {
+            properties.load(input);
+        }
+        String schemaVersion = requireMetadata(properties, "schema-version", resource);
+        if (!SCHEMA_VERSION.equals(schemaVersion)) {
+            throw new BeanDefinitionStoreException(
+                "Unsupported Lynxus Mapper metadata schema '" + schemaVersion
+                    + "' in " + resource.getDescription());
+        }
+        return new MapperMetadata(
+            requireMetadata(properties, "implementation-class", resource),
+            requireMetadata(properties, "mapper-interface", resource),
+            requireMetadata(properties, "mapper-package", resource));
+    }
+
+    private String requireMetadata(Properties properties, String key, Resource resource) {
+        String value = properties.getProperty(key);
+        if (value == null || value.isBlank()) {
+            throw new BeanDefinitionStoreException(
+                "Missing Lynxus Mapper metadata '" + key + "' in " + resource.getDescription());
+        }
+        return value.trim();
     }
 
     private void validateBindings(
@@ -147,6 +193,11 @@ final class GeneratedMapperBeanDefinitionRegistrar
         return left.startsWith(right + ".") || right.startsWith(left + ".");
     }
 
+    private boolean matchesPackage(String bindingPackage, String mapperPackage) {
+        return mapperPackage.equals(bindingPackage)
+            || mapperPackage.startsWith(bindingPackage + ".");
+    }
+
     private void requireText(String value, String property) {
         if (value == null || value.isBlank()) {
             throw new BeanDefinitionStoreException(
@@ -174,5 +225,11 @@ final class GeneratedMapperBeanDefinitionRegistrar
             }
         }
         return false;
+    }
+
+    private record MapperMetadata(
+            String implementationClass,
+            String mapperInterface,
+            String mapperPackage) {
     }
 }

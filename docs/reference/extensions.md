@@ -56,6 +56,10 @@ lynxus:
 - Package bindings select a DataSource domain only. They do not select a JDBC mapping family; Core's fixed, database-independent `TypeHandlerManager` routes standard values for every domain.
 - The Starter does not inspect database product metadata, maintain package mapping registries, or load database-specific mapping artifacts.
 - Generated Mapper implementations remain plain Java classes without Spring component or injection annotations.
+- The processor writes one metadata resource per generated Mapper under
+  `META-INF/lynxus/mappers/<generated-implementation-class>.properties`.
+- The Starter loads these resources from the classpath and discovers only
+  generated classes with valid processor metadata.
 - Binding happens during application startup. Mapper invocation still calls its final executor field directly and performs no package or bean lookup.
 - Each Spring transaction boundary must use the `PlatformTransactionManager` associated with the same DataSource as the selected executor.
 

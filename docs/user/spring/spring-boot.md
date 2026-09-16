@@ -28,12 +28,20 @@ Each binding owns the generated Mappers in that package and its subpackages:
 overlapping parent and child rules fail at startup instead of selecting a
 DataSource implicitly.
 
-At startup the starter:
+The annotation processor emits one independent metadata resource per generated
+Mapper under
+`META-INF/lynxus/mappers/<generated-implementation-class>.properties`.
+At startup the starter loads these resources from the runtime classpath and:
 
-1. scans the configured package for generated `*MapperImpl` classes;
+1. matches each metadata package to one configured binding;
 2. resolves the named Spring `DataSource` bean;
 3. creates one Spring-aware `SqlExecutor` for that DataSource;
 4. registers each implementation under the JavaBeans-decapped interface name.
+
+Generated Mapper implementations remain plain Java classes. The processor does
+not parse Spring configuration files, generate `@Component`, or require a
+Spring-specific compiler option. A class named `*MapperImpl` without processor
+metadata is not discovered.
 
 Mapper package bindings must not overlap. Applications with several DataSources use disjoint Mapper packages and a matching transaction manager for each domain.
 
