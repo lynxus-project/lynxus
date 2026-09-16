@@ -17,6 +17,7 @@ verified separately by the Starter's PostgreSQL/MySQL Testcontainers suite; an
 external consumer compile alone does not establish support for an unlisted
 Spring Boot line.
 
-The fixture is compile-only. It does not start an application or connect to a
-database; runtime DataSource binding and transaction behavior remain covered by
-the Starter's PostgreSQL/MySQL Testcontainers suite.
+The fixture also contains an independent PostgreSQL Testcontainers E2E. It
+starts the external Spring Boot application, verifies configuration binding and
+generated Mapper injection, executes real JDBC SQL, and verifies transaction
+rollback. The dedicated CI job runs this E2E against Spring Boot `4.1.1`.
