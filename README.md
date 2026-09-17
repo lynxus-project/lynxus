@@ -4,6 +4,8 @@
 
 # Lynxus: AOT-first Compile-time Java ORM
 
+[English](README.md) · [Chinese](README_cn.md)
+
 Lynxus is an AOT-first compile-time Java ORM for Java 21 applications. It validates SQL, parameters, dynamic SQL, and result mappings during compilation, then generates ordinary Java implementations with explicit JDBC execution and no runtime Mapper proxies or SQL interpreters. The generated path is suitable for applications targeting GraalVM Native Image or Spring Boot AOT, but neither is required to use Lynxus.
 
 Lynxus is a pragmatic MyBatis alternative for teams that want SQL to remain visible, generated code to remain readable, and JDBC behavior to remain deterministic. It supports annotation-based and XML-based mappings, standalone JDBC, Spring Boot integration, batch operations, generated keys, and typed extension points without requiring a reflection-heavy runtime ORM.
@@ -39,7 +41,45 @@ interface UserMapper {
 }
 ```
 
-During compilation, Lynxus generates `UserMapperImpl`, which executes through the explicit `SqlExecutor` contract. Start with the [full quick start](docs/user/getting-started.md) for Maven, annotation processor, standalone JDBC, and Spring Boot configuration.
+Compilation generates ordinary Java, not a JDK proxy. For the Mapper above, the processor emits `UserMapperImpl`. Inspect the live file under `target/generated-sources/annotations` after you compile. The excerpt below follows the current processor shape; it is documentation copy, not a checked-in generated file.
+
+```java
+public class UserMapperImpl implements UserMapper {
+    private final SqlExecutor sqlExecutor;
+
+    public UserMapperImpl(SqlExecutor sqlExecutor) {
+        this.sqlExecutor = java.util.Objects.requireNonNull(sqlExecutor, "sqlExecutor");
+    }
+
+    private static final QueryDefinition<User> FIND_BY_ID_DEFINITION = QueryDefinition.assembled(
+        "UserMapper.findById",
+        "SELECT id, name FROM users WHERE id = ?",
+        ExecutionPlan.SqlSource.ANNOTATION,
+        row -> new User((Long) row.get(0), (String) row.get(1)),
+        /* parameter binders, statement options, type routing */);
+
+    @Override
+    public User findById(Long id) {
+        QueryExecutionPlan<User> executionPlan = buildFindByIdExecutionPlan(id);
+        QueryResult<User> executionResult = sqlExecutor.query(executionPlan);
+        return executionResult.oneOrNull();
+    }
+
+    private QueryExecutionPlan<User> buildFindByIdExecutionPlan(Long id) {
+        return FIND_BY_ID_DEFINITION.bind(id);
+    }
+}
+```
+
+The **compile-time mapper index** is the set of processor-emitted mapper metadata resources the starter loads at startup. Lynxus uses it to register generated Mappers without scanning `*MapperImpl` classes.
+
+| Phase | MyBatis | Lynxus |
+| --- | --- | --- |
+| Compile | Mapper interfaces and XML are packaged almost as written | javac validates SQL, parameters, dynamic SQL, and result mappings; generates ordinary `MapperImpl`; writes the compile-time mapper index |
+| Startup | Parses XML, builds `MappedStatement`s, creates JDK proxies, scans Mappers | Loads the compile-time mapper index and registers already-generated classes. Does not parse XML, create proxies, or scan `*MapperImpl`. Spring Boot 4.1.1 is verified |
+| Invoke | `SqlSession.getMapper` proxy → dynamic SQL / OGNL → JDBC | Ordinary Java method → already-built plan → `SqlExecutor` → JDBC. No runtime XML, no OGNL |
+
+Start with the [full quick start](docs/user/getting-started.md) for Maven, annotation processor, standalone JDBC, and Spring Boot configuration. The rendered guides also live on the [documentation site](https://lynxus-project.github.io/).
 
 ```bash
 mvn clean test
@@ -81,6 +121,7 @@ For Native Image verification, see [GraalVM Native Image Java ORM usage](docs/us
 
 ## Documentation
 
+- [Documentation site](https://lynxus-project.github.io/): rendered guides, search, and the public origin for crawlers.
 - [Quick start](docs/user/getting-started.md): dependencies, annotation processing, a first Mapper, and runtime assembly.
 - [Architecture](docs/user/architecture.md): compile-time generation and the fixed JDBC lifecycle.
 - [GraalVM Native Image](docs/user/aot.md): AOT-first compilation and Native Image verification.

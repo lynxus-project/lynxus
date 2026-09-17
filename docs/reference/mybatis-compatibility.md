@@ -1,3 +1,9 @@
+---
+title: MyBatis Compatibility
+description: Classify MyBatis 3.5 Mapper patterns as generated, converted, or explicitly rejected by the Lynxus compile-time SQL mapper.
+slug: docs/reference/mybatis-compatibility
+---
+
 # MyBatis Compatibility
 
 This document is the single compatibility classification for Lynxus. It compares Lynxus with

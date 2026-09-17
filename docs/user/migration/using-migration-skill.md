@@ -1,3 +1,9 @@
+---
+title: Using The Lynxus Skill
+description: Install the Lynxus agent skill to scan a project, configure compile-time Mappers, and migrate from MyBatis in reviewable batches.
+slug: docs/user/migration/using-migration-skill
+---
+
 # Using The Lynxus Skill
 
 Lynxus's agent workflow is distributed as one skill. It covers greenfield

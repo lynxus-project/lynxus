@@ -1,3 +1,9 @@
+---
+title: Choosing a Value or Row Mapping
+description: Choose standard JDBC routing, generated result mapping, a parameter binder, or a row mapper in Lynxus.
+slug: docs/user/core/mapping
+---
+
 # Choosing a Value or Row Mapping
 
 Lynxus has one generated default path and two custom mapping escape hatches:

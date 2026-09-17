@@ -1,3 +1,9 @@
+---
+title: Standalone JDBC
+description: Assemble generated Lynxus Mappers with JdbcAssembly and callback transactions, without Spring.
+slug: docs/user/core/standalone
+---
+
 # Standalone JDBC
 
 One `JdbcAssembly` represents one DataSource and transaction domain.

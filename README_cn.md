@@ -38,7 +38,63 @@ Lynxus 不追求完整复刻 MyBatis。它关注显式 SQL、编译期诊断、�
 
 ## 开始使用
 
-请从英文的[快速开始](docs/user/getting-started.md)进入，其中包括依赖配置、注解处理、最小 Mapper，以及 Spring 或 Standalone 装配。
+Lynxus 在注解处理阶段读取 Mapper 接口、注解和可选 XML，并在 `target/generated-sources/annotations` 生成普通 Java 实现。
+
+```java
+import io.github.lynxus.annotation.Mapper;
+import io.github.lynxus.annotation.Param;
+import io.github.lynxus.annotation.Select;
+
+record User(Long id, String name) {
+}
+
+@Mapper
+interface UserMapper {
+
+    @Select("SELECT id, name FROM users WHERE id = #{id}")
+    User findById(@Param("id") Long id);
+}
+```
+
+编译生成的是普通 Java 类，不是 JDK 代理。上面的 Mapper 会得到 `UserMapperImpl`。请在本地编译后查看 `target/generated-sources/annotations` 中的实文件。下面的摘录与当前处理器形状一致，是文档说明，不是检入的生成文件。
+
+```java
+public class UserMapperImpl implements UserMapper {
+    private final SqlExecutor sqlExecutor;
+
+    public UserMapperImpl(SqlExecutor sqlExecutor) {
+        this.sqlExecutor = java.util.Objects.requireNonNull(sqlExecutor, "sqlExecutor");
+    }
+
+    private static final QueryDefinition<User> FIND_BY_ID_DEFINITION = QueryDefinition.assembled(
+        "UserMapper.findById",
+        "SELECT id, name FROM users WHERE id = ?",
+        ExecutionPlan.SqlSource.ANNOTATION,
+        row -> new User((Long) row.get(0), (String) row.get(1)),
+        /* parameter binders, statement options, type routing */);
+
+    @Override
+    public User findById(Long id) {
+        QueryExecutionPlan<User> executionPlan = buildFindByIdExecutionPlan(id);
+        QueryResult<User> executionResult = sqlExecutor.query(executionPlan);
+        return executionResult.oneOrNull();
+    }
+
+    private QueryExecutionPlan<User> buildFindByIdExecutionPlan(Long id) {
+        return FIND_BY_ID_DEFINITION.bind(id);
+    }
+}
+```
+
+**compile-time mapper index**（编译期 mapper 索引）是处理器为每个生成 Mapper 写出的 mapper metadata resource 的集合。Starter 在启动时读取它，用来注册已经生成的类，而不是扫描 `*MapperImpl`。
+
+| 阶段 | MyBatis | Lynxus |
+| --- | --- | --- |
+| 编译 | Mapper 接口和 XML 几乎原样进包 | javac 校验 SQL、参数、动态 SQL 和结果映射；生成普通 `MapperImpl`；写出 compile-time mapper index |
+| 启动 | 解析 XML、构建 `MappedStatement`、创建 JDK 代理、扫描 Mapper | 读取 compile-time mapper index 并注册已生成的类。不解析 XML，不创建代理，不扫描 `*MapperImpl`。已在 Spring Boot 4.1.1 上验证 |
+| 调用 | `SqlSession.getMapper` 代理 → 动态 SQL / OGNL → JDBC | 普通 Java 方法 → 已经编好的计划 → `SqlExecutor` → JDBC。没有运行时 XML，没有 OGNL |
+
+完整步骤（依赖、注解处理、Standalone JDBC、Spring Boot）见英文[快速开始](docs/user/getting-started.md)。渲染后的文档在 [documentation site](https://lynxus-project.github.io/)。
 
 ```bash
 mvn clean test
