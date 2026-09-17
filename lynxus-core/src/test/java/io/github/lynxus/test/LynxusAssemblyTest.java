@@ -28,6 +28,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Logger;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -53,7 +54,9 @@ class LynxusAssemblyTest {
             "first.before", "second.before",
             "second.success", "first.success"
         ), events);
-        assertInstanceOf(io.github.lynxus.jdbc.JdbcSqlExecutor.class, assembly.sqlExecutor());
+        assertFalse(
+            assembly.sqlExecutor() instanceof io.github.lynxus.jdbc.JdbcSqlExecutor,
+            "observational interceptors must wrap SqlExecutor outside JdbcSqlExecutor");
         assertInstanceOf(
             io.github.lynxus.transaction.SimpleTransactionalExecutor.class,
             assembly.transactionalExecutor()

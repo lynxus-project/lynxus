@@ -152,9 +152,10 @@ Use `@UseRowMapper` on a query method with a concrete `RowMapper<T>`.
 
 Register `ExecutionInterceptor` instances through `JdbcAssembly`, or expose them as ordered Spring beans with the starter.
 
-- `beforeExecution` runs in configured order.
-- `afterSuccess` and `afterFailure` run after executor-owned cleanup, in reverse order for interceptors whose before callback completed successfully.
-- `ExecutionPlan` exposes immutable statement input and `ExecutionOutcome` exposes duration, affected rows, result count, and failure.
+- `JdbcAssembly` and the Spring starter wrap ordered interceptors around `JdbcSqlExecutor`; generated Mappers still receive one `SqlExecutor`.
+- `beforeExecution` runs in configured order before `next`.
+- `afterSuccess` and `afterFailure` run after `next` returns or throws, in reverse order for interceptors whose before callback completed successfully. JDBC cleanup has already finished because it belongs to innermost `JdbcSqlExecutor`.
+- `ExecutionPlan` exposes immutable statement input. `ExecutionOutcome` is synthesized from the `next` call: duration is the `next` wall time; successful `SqlResult` values supply affected rows and result count; thrown `SqlExecutionException` supplies execution state and the same failure delivered to the caller.
 - The MVP contract is observational. It does not allow arbitrary SQL replacement or reflective mutation of generated binding and mapping.
 - Terminal callback `RuntimeException` values are logged and isolated. They neither mutate the final failure tree nor prevent remaining terminal interceptors from observing the outcome. JVM `Error` values still propagate.
 - Any interceptor callback adds runtime work; configure none when the direct path is preferred.

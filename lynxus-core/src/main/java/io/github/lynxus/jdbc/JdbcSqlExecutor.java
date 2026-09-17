@@ -4,7 +4,6 @@ import io.github.lynxus.api.BatchExecutionPlan;
 import io.github.lynxus.api.ConnectionHandle;
 import io.github.lynxus.api.ConnectionHandleFactory;
 import io.github.lynxus.api.CursorCallback;
-import io.github.lynxus.api.ExecutionInterceptor;
 import io.github.lynxus.api.ExecutionOutcome;
 import io.github.lynxus.api.ExecutionPhase;
 import io.github.lynxus.api.ExecutionPlan;
@@ -40,26 +39,17 @@ import java.util.Objects;
  */
 public final class JdbcSqlExecutor implements SqlExecutor {
 
-    private static final System.Logger LOGGER = System.getLogger(JdbcSqlExecutor.class.getName());
-
     private final ConnectionHandleFactory connectionHandleFactory;
-    private final List<ExecutionInterceptor> interceptors;
     private final TypeHandlerManager typeHandlerManager = new TypeHandlerManager();
 
     public JdbcSqlExecutor(ConnectionHandleFactory connectionHandleFactory) {
-        this(connectionHandleFactory, List.of());
-    }
-
-    public JdbcSqlExecutor(ConnectionHandleFactory connectionHandleFactory, List<ExecutionInterceptor> interceptors) {
         this.connectionHandleFactory = Objects.requireNonNull(connectionHandleFactory, "connectionHandleFactory");
-        this.interceptors = List.copyOf(Objects.requireNonNull(interceptors, "interceptors"));
     }
 
     @Override
     public SqlResult<?> execute(ExecutionPlan plan) {
         validate(plan);
         long startedAt = System.nanoTime();
-        List<ExecutionInterceptor> entered = new ArrayList<>(interceptors.size());
         ConnectionHandle connectionHandle = null;
         PreparedStatement statement = null;
         ResultSet resultSet = null;
@@ -70,7 +60,6 @@ public final class JdbcSqlExecutor implements SqlExecutor {
         Throwable executionFailure = null;
 
         try {
-            invokeBefore(plan, entered);
             connectionHandle = Objects.requireNonNull(
                 connectionHandleFactory.openHandle(), "connectionHandleFactory returned null");
             Connection connection = Objects.requireNonNull(
@@ -138,7 +127,6 @@ public final class JdbcSqlExecutor implements SqlExecutor {
             plan, phase, executionState, executionFailure, true,
             resultSet, statement, connectionHandle, startedAt,
             result == null ? confirmedAffectedRows : affectedRows(result), resultCount(result));
-        invokeTerminal(entered, outcome);
         throwIfFailed(outcome);
         return result;
     }
@@ -147,7 +135,6 @@ public final class JdbcSqlExecutor implements SqlExecutor {
     public <T, R> R queryCursor(ExecutionPlan plan, CursorCallback<T, R> callback) {
         validateCursor(plan, callback);
         long startedAt = System.nanoTime();
-        List<ExecutionInterceptor> entered = new ArrayList<>(interceptors.size());
         ConnectionHandle connectionHandle = null;
         PreparedStatement statement = null;
         ResultSet resultSet = null;
@@ -159,7 +146,6 @@ public final class JdbcSqlExecutor implements SqlExecutor {
         boolean wrapExecutionFailure = true;
 
         try {
-            invokeBefore(plan, entered);
             connectionHandle = Objects.requireNonNull(
                 connectionHandleFactory.openHandle(), "connectionHandleFactory returned null");
             Connection connection = Objects.requireNonNull(
@@ -191,7 +177,6 @@ public final class JdbcSqlExecutor implements SqlExecutor {
         ExecutionOutcome outcome = completeExecution(
             plan, phase, executionState, executionFailure, wrapExecutionFailure,
             resultSet, statement, connectionHandle, startedAt, 0, rowsRead);
-        invokeTerminal(entered, outcome);
         throwIfFailed(outcome);
         return callbackResult;
     }
@@ -225,47 +210,6 @@ public final class JdbcSqlExecutor implements SqlExecutor {
     @SuppressWarnings("unchecked")
     private <T> RowMapper<T> rowMapper(ExecutionPlan plan) {
         return (RowMapper<T>) plan.getRowMapper();
-    }
-
-    private void invokeBefore(ExecutionPlan plan, List<ExecutionInterceptor> entered) {
-        for (ExecutionInterceptor interceptor : interceptors) {
-            interceptor.beforeExecution(plan);
-            entered.add(interceptor);
-        }
-    }
-
-    private void invokeSuccess(List<ExecutionInterceptor> entered, ExecutionOutcome outcome) {
-        for (int index = entered.size() - 1; index >= 0; index--) {
-            ExecutionInterceptor interceptor = entered.get(index);
-            try {
-                interceptor.afterSuccess(outcome);
-            } catch (RuntimeException callbackFailure) {
-                logTerminalFailure(interceptor, outcome, callbackFailure);
-            }
-        }
-    }
-
-    private void invokeFailure(List<ExecutionInterceptor> entered, ExecutionOutcome outcome) {
-        for (int index = entered.size() - 1; index >= 0; index--) {
-            ExecutionInterceptor interceptor = entered.get(index);
-            try {
-                interceptor.afterFailure(outcome);
-            } catch (RuntimeException callbackFailure) {
-                logTerminalFailure(interceptor, outcome, callbackFailure);
-            }
-        }
-    }
-
-    private void logTerminalFailure(
-            ExecutionInterceptor interceptor, ExecutionOutcome outcome, RuntimeException failure) {
-        LOGGER.log(
-            System.Logger.Level.WARNING,
-            "Lynxus interceptor terminal callback failed [interceptor="
-                + interceptor.getClass().getName()
-                + ", statementId=" + outcome.plan().getStatementId()
-                + ", executionState=" + outcome.executionState() + ']'
-            , failure
-        );
     }
 
     private PreparedStatement prepare(Connection connection, ExecutionPlan plan) throws SQLException {
@@ -583,14 +527,6 @@ public final class JdbcSqlExecutor implements SqlExecutor {
                 plan, executionState, durationNanos, affectedRows, resultCount)
             : ExecutionOutcome.failure(
                 plan, executionState, durationNanos, affectedRows, resultCount, finalFailure);
-    }
-
-    private void invokeTerminal(List<ExecutionInterceptor> entered, ExecutionOutcome outcome) {
-        if (outcome.failed()) {
-            invokeFailure(entered, outcome);
-        } else {
-            invokeSuccess(entered, outcome);
-        }
     }
 
     private void throwIfFailed(ExecutionOutcome outcome) {

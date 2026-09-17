@@ -18,6 +18,6 @@ Start with generated annotation or XML SQL. Add the narrowest typed extension th
 | Exceptional whole-execution routing | `SqlExecutor` decorator | Explicit application assembly |
 | Behavior outside generated or typed contracts | Raw JDBC | Application-owned |
 
-Parameter binders, providers, and row mappers are validated during compilation and directly referenced by generated code. Core standard routing uses generated Java types and JDBC metadata without scanning or reflective discovery. Runtime execution still belongs to `JdbcSqlExecutor`.
+Parameter binders, providers, and row mappers are validated during compilation and directly referenced by generated code. Core standard routing uses generated Java types and JDBC metadata without scanning or reflective discovery. JDBC execution still belongs to `JdbcSqlExecutor`. Observational interceptors wrap `SqlExecutor` outside that lifecycle.
 
 Use [Choosing a Value or Row Mapping](mapping.md) for the detailed mapping decision. Exact visibility, constructor, lifecycle, thread-safety, null-handling, and host-integration rules are defined in the [Extension contracts](../../reference/extensions.md).

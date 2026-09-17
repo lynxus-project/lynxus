@@ -187,16 +187,18 @@ Unsupported Mapper behavior fails compilation instead of falling back to runtime
 
 ## 3. JDBC Execution Contract
 
-`JdbcSqlExecutor` owns this fixed order:
+`JdbcSqlExecutor` owns this fixed JDBC order:
 
 ```text
-validate -> before interceptors -> open handle -> acquire connection
+validate -> open handle -> acquire connection
 -> prepare -> apply statement options -> bind -> execute -> read/map
 -> deactivate cursor -> close ResultSet -> close statement -> close handle
--> form final outcome -> terminal interceptors
+-> form final outcome
 ```
 
-The sequence is not a pluggable phase chain. SQL structure, value binding, row mapping, observation, and host connection participation use their dedicated typed contracts.
+Observational `ExecutionInterceptor` instances wrap `SqlExecutor` outside that JDBC lifecycle. Registration order is outer to inner: `before` callbacks run, then `next` (ultimately JDBC), then reverse `afterSuccess` / `afterFailure`. The adapter synthesizes `ExecutionOutcome` from the `next` call; duration is the `next` wall time and includes JDBC cleanup. Terminal adapter callback failures stay isolated.
+
+The JDBC sequence is not a pluggable phase chain. SQL structure, value binding, row mapping, observation, and host connection participation use their dedicated typed contracts.
 
 Standalone and hosted integrations share this exact executor lifecycle. A host may supply connection participation and own transaction completion, but it does not prepare statements, bind values, execute SQL, read or map results, close executor-owned resources, or publish execution outcomes.
 

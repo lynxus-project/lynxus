@@ -41,7 +41,8 @@ public final class JdbcAssembly {
     public static SqlExecutor sqlExecutor(
             ConnectionHandleFactory connectionHandleFactory,
             List<ExecutionInterceptor> interceptors) {
-        return new JdbcSqlExecutor(connectionHandleFactory, interceptors);
+        return InterceptingSqlExecutor.wrap(
+            new JdbcSqlExecutor(connectionHandleFactory), interceptors);
     }
 
     public static final class Builder {
