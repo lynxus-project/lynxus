@@ -3,6 +3,7 @@ package io.github.lynxus;
 import io.github.lynxus.api.ConfigurationException;
 import io.github.lynxus.api.ConnectionHandleFactory;
 import io.github.lynxus.api.ExecutionInterceptor;
+import io.github.lynxus.api.ExecutionPlugin;
 import io.github.lynxus.api.SqlExecutor;
 import io.github.lynxus.api.TransactionDomain;
 import io.github.lynxus.api.TransactionalExecutor;
@@ -41,8 +42,15 @@ public final class JdbcAssembly {
     public static SqlExecutor sqlExecutor(
             ConnectionHandleFactory connectionHandleFactory,
             List<ExecutionInterceptor> interceptors) {
+        return sqlExecutor(connectionHandleFactory, interceptors, List.of());
+    }
+
+    public static SqlExecutor sqlExecutor(
+            ConnectionHandleFactory connectionHandleFactory,
+            List<ExecutionInterceptor> interceptors,
+            List<ExecutionPlugin> plugins) {
         return InterceptingSqlExecutor.wrap(
-            new JdbcSqlExecutor(connectionHandleFactory), interceptors);
+            new JdbcSqlExecutor(connectionHandleFactory), interceptors, plugins);
     }
 
     public static final class Builder {
@@ -51,6 +59,7 @@ public final class JdbcAssembly {
         private TransactionDomain domain = new TransactionDomain("default");
         private SimpleTransactionDomainGuard domainGuard = new SimpleTransactionDomainGuard();
         private List<ExecutionInterceptor> interceptors = List.of();
+        private List<ExecutionPlugin> plugins = List.of();
 
         Builder(DataSource dataSource) {
             this.dataSource = dataSource;
@@ -94,11 +103,31 @@ public final class JdbcAssembly {
             return this;
         }
 
+        public Builder plugins(List<ExecutionPlugin> plugins) {
+            if (plugins == null) {
+                throw new ConfigurationException("plugins must not be null");
+            }
+            List<ExecutionPlugin> copy = new ArrayList<>(plugins.size());
+            Map<ExecutionPlugin, Boolean> identities = new IdentityHashMap<>();
+            for (int index = 0; index < plugins.size(); index++) {
+                ExecutionPlugin plugin = plugins.get(index);
+                if (plugin == null) {
+                    throw new ConfigurationException("plugins[" + index + "] must not be null");
+                }
+                if (identities.put(plugin, Boolean.TRUE) != null) {
+                    throw new ConfigurationException("duplicate plugin instance at index " + index);
+                }
+                copy.add(plugin);
+            }
+            this.plugins = List.copyOf(copy);
+            return this;
+        }
+
         public JdbcAssembly build() {
             SimpleConnectionHandleFactory connectionHandleFactory = new SimpleConnectionHandleFactory(
                 dataSource, domain, domainGuard);
             return new JdbcAssembly(
-                sqlExecutor(connectionHandleFactory, interceptors),
+                sqlExecutor(connectionHandleFactory, interceptors, plugins),
                 new SimpleTransactionalExecutor(connectionHandleFactory)
             );
         }

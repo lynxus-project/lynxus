@@ -2,6 +2,7 @@ package io.github.lynxus;
 
 import io.github.lynxus.api.CursorCallback;
 import io.github.lynxus.api.ExecutionInterceptor;
+import io.github.lynxus.api.ExecutionPlugin;
 import io.github.lynxus.api.ExecutionOutcome;
 import io.github.lynxus.api.ExecutionPhase;
 import io.github.lynxus.api.ExecutionPlan;
@@ -30,12 +31,27 @@ final class InterceptingSqlExecutor implements SqlExecutor {
     }
 
     static SqlExecutor wrap(SqlExecutor next, List<ExecutionInterceptor> interceptors) {
+        return wrap(next, interceptors, List.of());
+    }
+
+    static SqlExecutor wrap(
+            SqlExecutor next,
+            List<ExecutionInterceptor> interceptors,
+            List<ExecutionPlugin> plugins) {
         Objects.requireNonNull(next, "next");
         Objects.requireNonNull(interceptors, "interceptors");
-        if (interceptors.isEmpty()) {
+        Objects.requireNonNull(plugins, "plugins");
+        if (interceptors.isEmpty() && plugins.isEmpty()) {
             return next;
         }
-        return new InterceptingSqlExecutor(next, List.copyOf(interceptors));
+        SqlExecutor current = new JdbcInvocationProbe(next);
+        for (int index = plugins.size() - 1; index >= 0; index--) {
+            current = new PluginSqlExecutor(plugins.get(index), current);
+        }
+        if (!interceptors.isEmpty()) {
+            current = new InterceptingSqlExecutor(current, List.copyOf(interceptors));
+        }
+        return new PluginChainHead(current);
     }
 
     @Override
@@ -110,7 +126,7 @@ final class InterceptingSqlExecutor implements SqlExecutor {
             resultCount = sqlResult.getQueryResults() == null ? 0 : sqlResult.getQueryResults().size();
         }
         return ExecutionOutcome.success(
-            plan, JdbcExecutionState.EXECUTED, elapsed(startedAt), affectedRows, resultCount);
+            plan, PluginChainContext.jdbcState(), elapsed(startedAt), affectedRows, resultCount);
     }
 
     private ExecutionOutcome failureOutcome(

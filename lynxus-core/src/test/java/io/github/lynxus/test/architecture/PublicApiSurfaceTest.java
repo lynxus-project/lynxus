@@ -47,6 +47,7 @@ class PublicApiSurfaceTest {
         "io.github.lynxus.api.ExecutionOutcome",
         "io.github.lynxus.api.ExecutionPhase",
         "io.github.lynxus.api.ExecutionPlan",
+        "io.github.lynxus.api.ExecutionPlugin",
         "io.github.lynxus.api.GeneratedKeyResult",
         "io.github.lynxus.api.JdbcExecutionState",
         "io.github.lynxus.api.LynxusException",
