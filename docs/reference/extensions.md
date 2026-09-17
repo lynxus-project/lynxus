@@ -168,6 +168,15 @@ Register `CachingExecutionPlugin` with a `QueryCache` through `JdbcAssembly.plug
 - A miss calls `next` unchanged and stores a successful `SqlResult`. Failures are not stored.
 - Insert, update, delete, batch, and `queryCursor` pass through. Writes do not invalidate the cache; invalidation is follow-on. This adapter is opt-in and SELECT-only.
 - `MemoryQueryCache` is a concurrent in-memory implementation with no eviction.
+
+## Pagination Plugin
+
+Register `PagingExecutionPlugin` with a `PaginationDialect` through `JdbcAssembly.plugins(...)`. Bind a `PageRequest` on `PageContext` for the current call and clear it afterwards.
+
+- Only `execute` of `SELECT` plans is rewritten. Non-SELECT statements, unbound calls, and `queryCursor` pass through.
+- `LimitOffsetPaginationDialect` appends `LIMIT ? OFFSET ?` and bound limit/offset parameters. PostgreSQL and MySQL share this form. There is no automatic count query and no framework `Page<T>`.
+- Offset and limit must be non-negative. Invalid `PageRequest` fails before `next`.
+- The replacement keeps `statementId`, statement type, binders, and row mapper.
 - Terminal callback `RuntimeException` values are logged and isolated. They neither mutate the final failure tree nor prevent remaining terminal interceptors from observing the outcome. JVM `Error` values still propagate.
 - Any interceptor callback adds runtime work; configure none when the direct path is preferred.
 

@@ -17,6 +17,7 @@ Start with generated annotation or XML SQL. Add the narrowest typed extension th
 | Logs, metrics, audit, or authorization observation | `ExecutionInterceptor` | Executor assembly |
 | Skip JDBC or replace an immutable plan | `ExecutionPlugin` | Executor assembly |
 | Cache identical SELECT results | `CachingExecutionPlugin` and `QueryCache` | Executor assembly |
+| Page a SELECT with LIMIT/OFFSET | `PagingExecutionPlugin` and `PageRequest` | Executor assembly |
 | Exceptional whole-execution routing | `SqlExecutor` decorator | Explicit application assembly |
 | Behavior outside generated or typed contracts | Raw JDBC | Application-owned |
 
