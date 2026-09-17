@@ -16,6 +16,7 @@ Start with generated annotation or XML SQL. Add the narrowest typed extension th
 | Unsupported result-row shape | `@UseRowMapper` and `RowMapper<T>` | One query method, reads only |
 | Logs, metrics, audit, or authorization observation | `ExecutionInterceptor` | Executor assembly |
 | Skip JDBC or replace an immutable plan | `ExecutionPlugin` | Executor assembly |
+| Cache identical SELECT results | `CachingExecutionPlugin` and `QueryCache` | Executor assembly |
 | Exceptional whole-execution routing | `SqlExecutor` decorator | Explicit application assembly |
 | Behavior outside generated or typed contracts | Raw JDBC | Application-owned |
 
