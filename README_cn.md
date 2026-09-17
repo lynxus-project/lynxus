@@ -6,9 +6,9 @@
 
 [English](README.md)
 
-Lynxus 是一个面向 Java 21 的轻量级编译期 SQL Mapper。它在 javac 注解处理阶段读取 Mapper 接口、SQL 注解和可选 XML，生成普通 Java 实现，再通过明确、固定的 JDBC 生命周期执行不可变计划。
+Lynxus 是一个面向 Java 21 的 AOT-first 编译期 Java ORM。它在 javac 注解处理阶段读取 Mapper 接口、SQL 注解和可选 XML，生成普通 Java 实现，再通过明确、固定的 JDBC 生命周期执行不可变计划。
 
-Lynxus 不追求完整复刻 MyBatis。它关注显式 SQL、编译期诊断、可读的生成代码、确定性的 JDBC 行为，以及不依赖 Mapper 代理和运行期 XML 解释的小型运行时。
+Lynxus 对标 MyBatis，而不是 Hibernate。它不复制 MyBatis 的运行时架构，关注显式 SQL、编译期诊断、可读的生成代码、确定性的 JDBC 行为，以及不依赖 Mapper 代理和运行期 XML 解释的小型运行时。
 
 ## 顶层设计
 

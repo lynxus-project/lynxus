@@ -6,9 +6,9 @@
 
 ## Purpose
 
-Lynxus exists to provide a smaller and more predictable SQL Mapper for Java teams that value explicit SQL, compile-time feedback, readable generated code, and direct JDBC behavior.
+Lynxus exists to provide a smaller and more predictable compile-time Java ORM for teams that value explicit SQL, compile-time feedback, readable generated code, and direct JDBC behavior. It is not a mapper tool and not a Hibernate or JPA Session ORM.
 
-MyBatis 3.5.x is Lynxus's compatibility baseline for deterministic SQL Mapper behavior and JDBC value types. Lynxus does not copy MyBatis runtime architecture, but a migration should not lose a deterministic mapping merely because Lynxus omitted the corresponding built-in type. Success means teams can adopt Lynxus through normal Maven or Gradle dependencies, migrate supported Mapper code with limited friction, understand generated behavior, and diagnose failures without framework internals.
+MyBatis 3.5.x is Lynxus's compatibility baseline for deterministic mapping behavior and JDBC value types. Lynxus does not copy MyBatis runtime architecture, but a migration should not lose a deterministic mapping merely because Lynxus omitted the corresponding built-in type. Success means teams can adopt Lynxus through normal Maven or Gradle dependencies, migrate supported Mapper code with limited friction, understand generated behavior, and diagnose failures without framework internals. Hibernate is not the comparison target.
 
 ## Core Model
 
@@ -125,7 +125,7 @@ Spring may provide IoC, transaction managers, physical DataSources, and ordered 
 
 ## Compatibility Philosophy
 
-Lynxus supports common SQL Mapper work directly, converts some MyBatis patterns into static Lynxus forms, and rejects features that depend on session state, runtime interpretation, complex object graphs, or hidden framework policy.
+Lynxus supports common Mapper authoring directly, converts some MyBatis patterns into static Lynxus forms, and rejects features that depend on session state, runtime interpretation, complex object graphs, or hidden framework policy.
 
 Deterministic MyBatis JDBC value behavior is a compatibility target. Lynxus generates Java type information and uses a fixed Core `TypeHandlerManager` to combine it with optional parameter `jdbcType` declarations or live result metadata. Generated result assemblers still construct records and JavaBeans directly inside the executor lifecycle. Unsupported scalar representations use an explicit `ParameterBinder` or `RowMapper`; package mappings, database-specific routing, unknown-object fallback, reflection-based construction, global registries, and resource values that cannot survive the fixed JDBC cleanup boundary remain outside the contract.
 

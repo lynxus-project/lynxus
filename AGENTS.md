@@ -31,7 +31,7 @@ Lynxus uses one root domain context with repository-wide ADRs. See `docs/contrib
 
 ## Project Mission
 
-Lynxus is a lightweight compile-time SQL Mapper for Java. It moves Mapper validation, dynamic SQL compilation, parameter planning, and result-mapping generation to javac while keeping runtime execution explicit and JDBC-based.
+Lynxus is a compile-time Java ORM. It moves Mapper validation, dynamic SQL compilation, parameter planning, and result-mapping generation to javac while keeping runtime execution explicit and JDBC-based. Do not describe Lynxus as a mapper tool. The competitive baseline is MyBatis, not Hibernate.
 
 ## Non-Negotiable Architecture
 
