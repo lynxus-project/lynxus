@@ -1,3 +1,9 @@
+---
+title: Extension Contracts
+description: Precise Lynxus contracts for Spring Boot versions, mapper metadata resources, typed extensions, and interceptor lifecycle.
+slug: docs/reference/extensions
+---
+
 # Extension Contracts
 
 Lynxus keeps generated Mapper code as the default. Extensions are narrow, explicit escape hatches for cases that cannot remain fully generated.

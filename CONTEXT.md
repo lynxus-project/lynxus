@@ -64,3 +64,11 @@ _Avoid_: Query DSL, runtime SQL interpreter, parameter list accumulator
 A Mapper-method-specific strategy for constructing one result object from the current result row. It may combine several columns and does not bind statement parameters.
 Unlike a generated result assembler, it reads the live `ResultSet` directly for an explicitly configured exceptional mapping.
 _Avoid_: Type handler, parameter binder, result assembler, result-set interceptor
+
+**Compile-time mapper index**:
+The set of processor-emitted mapper identities used at startup to discover generated Mapper implementations. It is not one file, and it is not a classpath scan of `*MapperImpl` classes.
+_Avoid_: classpath component scan, MapperImpl suffix scan, MyBatis mapper scan, single index file
+
+**Mapper metadata resource**:
+One processor-emitted descriptor for one generated Mapper. The compile-time mapper index is the set of these resources.
+_Avoid_: Spring component index, mapper registry, MyBatis mapper XML

@@ -1,3 +1,9 @@
+---
+title: Quick Start for a Compile-time Java ORM
+description: Add Lynxus to Maven, generate a Mapper implementation at compile time, and run it with Spring Boot or standalone JDBC.
+slug: docs/user/getting-started
+---
+
 # Quick Start
 
 Lynxus requires Java 21. It generates ordinary Java Mapper implementations during annotation processing and executes them through a small JDBC runtime.
@@ -96,6 +102,8 @@ import io.github.lynxus.annotation.Mapper;
 import io.github.lynxus.annotation.Param;
 import io.github.lynxus.annotation.Select;
 
+import java.util.List;
+
 @Mapper
 public interface UserMapper {
 
@@ -104,10 +112,52 @@ public interface UserMapper {
 
     @Select("SELECT id, name FROM users WHERE id = #{id}")
     User findById(@Param("id") Long id);
+
+    @Select({
+        "<script>",
+        "SELECT id, name FROM users WHERE 1=1",
+        "<if test='name != null'>AND name LIKE #{name}</if>",
+        "</script>"
+    })
+    List<User> findByName(@Param("name") String name);
 }
 ```
 
-Compilation generates `UserMapperImpl` under `target/generated-sources/annotations`. The implementation directly implements `UserMapper` and receives one `SqlExecutor` through its constructor.
+Compilation generates `UserMapperImpl` under `target/generated-sources/annotations`. The implementation directly implements `UserMapper` and receives one `SqlExecutor` through its constructor. Inspect that directory after you compile. The excerpts below follow the current processor shape; they are documentation copy, not checked-in generated files.
+
+Static SQL becomes a `QueryDefinition` and an ordinary method that calls `SqlExecutor`:
+
+```java
+private static final QueryDefinition<User> FIND_BY_ID_DEFINITION = QueryDefinition.assembled(
+    "com.example.user.mapper.UserMapper.findById",
+    "SELECT id, name FROM users WHERE id = ?",
+    ExecutionPlan.SqlSource.ANNOTATION,
+    row -> new User((Long) row.get(0), (String) row.get(1)),
+    /* parameter binders, statement options, type routing */);
+
+@Override
+public User findById(Long id) {
+    QueryExecutionPlan<User> executionPlan = buildFindByIdExecutionPlan(id);
+    QueryResult<User> executionResult = sqlExecutor.query(executionPlan);
+    return executionResult.oneOrNull();
+}
+
+private QueryExecutionPlan<User> buildFindByIdExecutionPlan(Long id) {
+    return FIND_BY_ID_DEFINITION.bind(id);
+}
+```
+
+Supported dynamic SQL becomes Java control flow, not OGNL evaluation at invoke time:
+
+```java
+BoundSqlBuilder sql = BoundSqlBuilder.create("com.example.user.mapper.UserMapper#findByName");
+sql.append("SELECT id, name FROM users WHERE 1=1");
+if (name != null) {
+    sql.append("AND name LIKE ?");
+    sql.parameter(name, null, java.lang.String.class, java.sql.JDBCType.VARCHAR);
+}
+return FIND_BY_NAME_DEFINITION.bind(sql.build());
+```
 
 ## 3. Assemble the Mapper
 

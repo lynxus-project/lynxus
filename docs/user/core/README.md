@@ -1,3 +1,9 @@
+---
+title: Core Guides
+description: Core Lynxus guides for JDBC mapping, typed extensions, and standalone assembly without Spring.
+slug: docs/user/core
+---
+
 # Core Guides
 
 The Core module owns generated Mapper runtime contracts, execution, standalone JDBC assembly, and

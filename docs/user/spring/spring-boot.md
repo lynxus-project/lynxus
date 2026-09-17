@@ -1,6 +1,6 @@
 ---
 title: Spring Boot AOT ORM Integration
-description: Integrate Lynxus with Spring Boot, named DataSources, explicit transactions, and Spring AOT.
+description: Integrate Lynxus with Spring Boot 3.1, 3.5, and 4.1.1 using a compile-time mapper index, named DataSources, and explicit transactions.
 slug: docs/user/spring/spring-boot
 ---
 
@@ -28,10 +28,11 @@ Each binding owns the generated Mappers in that package and its subpackages:
 overlapping parent and child rules fail at startup instead of selecting a
 DataSource implicitly.
 
-The annotation processor emits one independent metadata resource per generated
-Mapper under
+The processor writes the **compile-time mapper index**: one mapper metadata
+resource per generated Mapper, at
 `META-INF/lynxus/mappers/<generated-implementation-class>.properties`.
-At startup the starter loads these resources from the runtime classpath and:
+The index is that set of resources, not a single file. At startup the starter
+loads it from the runtime classpath and:
 
 1. matches each metadata package to one configured binding;
 2. resolves the named Spring `DataSource` bean;

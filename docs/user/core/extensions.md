@@ -1,3 +1,9 @@
+---
+title: Choosing an Extension
+description: Pick the narrowest Lynxus extension—provider, binder, row mapper, or interceptor—without replacing JDBC execution.
+slug: docs/user/core/extensions
+---
+
 # Choosing an Extension
 
 Start with generated annotation or XML SQL. Add the narrowest typed extension that owns the exceptional behavior instead of introducing a runtime registry or replacing the JDBC lifecycle.

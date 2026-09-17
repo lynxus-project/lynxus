@@ -1,3 +1,9 @@
+---
+title: Lynxus Core GA Contract
+description: Normative Lynxus Core contract for Mapper SQL methods, JDBC execution, failures, transactions, and mapping boundaries.
+slug: docs/reference/core-contract
+---
+
 # Lynxus Core GA Contract
 
 Date: 2026-09-08

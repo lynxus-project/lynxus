@@ -1,3 +1,9 @@
+---
+title: Lynxus User Documentation
+description: Task-oriented Lynxus guides for getting started, architecture, Spring Boot, mapping, and MyBatis migration.
+slug: docs/user
+---
+
 # Lynxus User Documentation
 
 Lynxus documentation is organized by the task or module a user is working with. Start with the quick start, then open only the module-specific guide you need.

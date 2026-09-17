@@ -1,3 +1,9 @@
+---
+title: Contribute to Lynxus
+description: Contribute to Lynxus contracts, compiler, documentation, and agent workflow with focused pull requests and executable tests.
+slug: docs/contribute
+---
+
 # Contribute to Lynxus
 
 Lynxus is in its early stage. We are building a new generation of explicit, compile-time Java ORM tooling and welcome people who want to shape its contracts, implementation, documentation, examples, and agent workflows.

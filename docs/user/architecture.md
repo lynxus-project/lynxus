@@ -1,6 +1,6 @@
 ---
 title: Compile-time Java ORM Architecture
-description: See how Lynxus compiles SQL mapping into Java and keeps JDBC execution explicit at runtime.
+description: Compare Lynxus and MyBatis at compile, startup, and invoke, and see how generated Mappers call explicit JDBC.
 slug: docs/user/architecture
 ---
 
@@ -38,6 +38,16 @@ Standalone and Spring applications use the same generated Mapper and `JdbcSqlExe
 - [Spring Boot](spring/spring-boot.md) owns IoC, named DataSource binding, and transaction boundaries.
 
 One Mapper belongs to one DataSource domain. Applications with several DataSources use disjoint Mapper packages and independent executor graphs.
+
+## Compile, startup, and invoke
+
+The **compile-time mapper index** is the set of processor-emitted mapper metadata resources the starter loads at startup. Lynxus uses it to register generated Mappers without scanning `*MapperImpl` classes.
+
+| Phase | MyBatis | Lynxus |
+| --- | --- | --- |
+| Compile | Mapper interfaces and XML are packaged almost as written | javac validates SQL, parameters, dynamic SQL, and result mappings; generates ordinary `MapperImpl`; writes the compile-time mapper index |
+| Startup | Parses XML, builds `MappedStatement`s, creates JDK proxies, scans Mappers | Loads the compile-time mapper index and registers already-generated classes. Does not parse XML, create proxies, or scan `*MapperImpl`. Spring Boot 4.1.1 is verified |
+| Invoke | `SqlSession.getMapper` proxy → dynamic SQL / OGNL → JDBC | Ordinary Java method → already-built plan → `SqlExecutor` → JDBC. No runtime XML, no OGNL |
 
 ![Animated comparison of the Lynxus and traditional ORM lifecycles](../assets/lynxus-vs-traditional-orm-flow-en.gif)
 

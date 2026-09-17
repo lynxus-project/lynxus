@@ -1,3 +1,9 @@
+---
+title: Migrating From MyBatis
+description: Migrate supported MyBatis Mapper SQL to Lynxus compile-time generation and replace SqlSession, OGNL, and plugin runtime features explicitly.
+slug: docs/user/migration/from-mybatis
+---
+
 # Migrating From MyBatis
 
 ## 1. Classify Each Mapper Method
