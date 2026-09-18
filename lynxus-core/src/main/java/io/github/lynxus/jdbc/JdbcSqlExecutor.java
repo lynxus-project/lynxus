@@ -1,5 +1,6 @@
 package io.github.lynxus.jdbc;
 
+import io.github.lynxus.PluginChainContext;
 import io.github.lynxus.api.BatchExecutionPlan;
 import io.github.lynxus.api.ConnectionHandle;
 import io.github.lynxus.api.ConnectionHandleFactory;
@@ -73,7 +74,7 @@ public final class JdbcSqlExecutor implements SqlExecutor {
                     phase = ExecutionPhase.EXECUTION;
                     executionState = JdbcExecutionState.OUTCOME_UNKNOWN;
                     resultSet = statement.executeQuery();
-                    executionState = JdbcExecutionState.EXECUTED;
+                    executionState = markExecuted();
                     ResultAssembler<?> resultAssembler = plan instanceof QueryExecutionPlan<?> queryPlan
                         ? queryPlan.getResultAssembler() : null;
                     phase = plan.getRowMapper() == null && resultAssembler == null
@@ -90,7 +91,7 @@ public final class JdbcSqlExecutor implements SqlExecutor {
                     phase = ExecutionPhase.EXECUTION;
                     executionState = JdbcExecutionState.OUTCOME_UNKNOWN;
                     int updateCount = statement.executeUpdate();
-                    executionState = JdbcExecutionState.EXECUTED;
+                    executionState = markExecuted();
                     confirmedAffectedRows = updateCount;
                     if (plan.returnsGeneratedKey()) {
                         phase = plan.getRowMapper() == null && plan.getTypeRouting() == null
@@ -114,7 +115,7 @@ public final class JdbcSqlExecutor implements SqlExecutor {
                     } else {
                         executionState = JdbcExecutionState.OUTCOME_UNKNOWN;
                         updateCounts = statement.executeBatch();
-                        executionState = JdbcExecutionState.EXECUTED;
+                        executionState = markExecuted();
                     }
                     result = SqlResult.forBatch(updateCounts);
                 }
@@ -157,7 +158,7 @@ public final class JdbcSqlExecutor implements SqlExecutor {
             phase = ExecutionPhase.EXECUTION;
             executionState = JdbcExecutionState.OUTCOME_UNKNOWN;
             resultSet = statement.executeQuery();
-            executionState = JdbcExecutionState.EXECUTED;
+            executionState = markExecuted();
             phase = ExecutionPhase.MAPPING;
             cursor = new JdbcRowCursor<>(resultSet, rowMapper(plan));
             callbackResult = callback.consume(cursor);
@@ -216,6 +217,11 @@ public final class JdbcSqlExecutor implements SqlExecutor {
         return plan.returnsGeneratedKey()
             ? connection.prepareStatement(plan.getSql(), new String[]{plan.getGeneratedKeyColumn()})
             : connection.prepareStatement(plan.getSql());
+    }
+
+    private JdbcExecutionState markExecuted() {
+        PluginChainContext.markJdbcExecuted();
+        return JdbcExecutionState.EXECUTED;
     }
 
     private void applyOptions(PreparedStatement statement, StatementOptions options) throws SQLException {

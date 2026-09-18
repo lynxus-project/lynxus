@@ -115,7 +115,7 @@ Established design patterns are tools for recurring problems, not goals by thems
 
 Do not apply SOLID principles, design patterns, abstraction rules, or architectural styles mechanically. Use them only when they make the design easier to understand, verify, maintain, and change.
 
-For Lynxus, this keeps the runtime contract cohesive, separates compiler and integration concerns, and allows exceptional behavior through narrow typed contracts such as `SqlProvider`, `ParameterBinder`, `RowMapper`, `ExecutionInterceptor`, and `ConnectionHandleFactory`. These extensions must not replace the fixed JDBC lifecycle or become a general runtime plugin chain.
+For Lynxus, this keeps the runtime contract cohesive, separates compiler and integration concerns, and allows exceptional behavior through narrow typed contracts such as `SqlProvider`, `ParameterBinder`, `RowMapper`, `ExecutionInterceptor`, `ExecutionPlugin`, and `ConnectionHandleFactory`. These extensions must not replace the fixed JDBC lifecycle or become a MyBatis-style phase chain over prepare, bind, or mapping. `ExecutionPlugin` may only observe, replace an immutable plan, or short-circuit around `SqlExecutor`.
 
 ### Keep DataSource Ownership Unambiguous
 
@@ -135,7 +135,7 @@ Direct support focuses on:
 - controlled dynamic SQL;
 - scalar, record, JavaBean, list, optional, cursor, batch, and generated-key contracts;
 - explicit transactions and DataSource bindings;
-- typed providers, binders, row mappers, and interceptors.
+- typed providers, binders, row mappers, interceptors, and closed-effect execution plugins.
 
 Migration tooling may rewrite deterministic syntax. It must report rather than guess when encountering complex `resultMap` graphs, nested queries, arbitrary OGNL, plugins, caches, or ambiguous Spring configuration.
 
@@ -143,15 +143,17 @@ Migration tooling may rewrite deterministic syntax. It must report rather than g
 
 Lynxus does not add:
 
-- first-level or second-level ORM caches;
+- first-level or second-level ORM session caches (`SqlSession` local cache or a second-level cache);
 - `SqlSession`;
 - runtime XML reload or OGNL interpretation;
 - lazy loading or complex relationship graphs;
-- automatic count queries or framework pagination models;
+- automatic count queries or framework `Page<T>` models;
 - distributed transaction management;
-- runtime SQL rewriting plugins;
+- a general SQL-rewrite plugin chain over JDBC prepare, bind, or mapping;
 - full MyBatis plugin or API compatibility;
 - one Mapper dynamically bound to multiple DataSources.
+
+Opt-in `QueryCache` short-circuit and LIMIT/OFFSET replace-plan pagination are closed `ExecutionPlugin` effects, not those non-goals.
 
 These omissions are deliberate boundaries, not incomplete features.
 

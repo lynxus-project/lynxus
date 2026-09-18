@@ -44,7 +44,7 @@ final class InterceptingSqlExecutor implements SqlExecutor {
         if (interceptors.isEmpty() && plugins.isEmpty()) {
             return next;
         }
-        SqlExecutor current = new JdbcInvocationProbe(next);
+        SqlExecutor current = next;
         for (int index = plugins.size() - 1; index >= 0; index--) {
             current = new PluginSqlExecutor(plugins.get(index), current);
         }
@@ -66,33 +66,40 @@ final class InterceptingSqlExecutor implements SqlExecutor {
 
     private <T> T invoke(ExecutionPlan plan, Execution<T> execution) {
         Objects.requireNonNull(plan, "plan");
-        long startedAt = System.nanoTime();
         List<ExecutionInterceptor> entered = new ArrayList<>(interceptors.size());
         try {
             invokeBefore(plan, entered);
-            T result = execution.run();
-            invokeSuccess(entered, successOutcome(plan, startedAt, result));
-            return result;
         } catch (Throwable failure) {
-            ExecutionOutcome outcome = failureOutcome(plan, startedAt, failure, entered.size() < interceptors.size());
-            invokeTerminal(entered, outcome);
-            throwIfFailed(outcome);
+            fail(entered, plan, System.nanoTime(), failure, true);
+        }
+        long startedAt = System.nanoTime();
+        T result;
+        try {
+            result = execution.run();
+        } catch (Throwable failure) {
+            fail(entered, plan, startedAt, failure, false);
             throw new IllegalStateException("unreachable");
         }
+        invokeSuccess(entered, successOutcome(plan, startedAt, result));
+        return result;
+    }
+
+    private void fail(
+            List<ExecutionInterceptor> entered,
+            ExecutionPlan plan,
+            long startedAt,
+            Throwable failure,
+            boolean beforeFailed) {
+        ExecutionOutcome outcome = failureOutcome(plan, startedAt, failure, beforeFailed);
+        invokeFailure(entered, outcome);
+        throwIfFailed(outcome);
+        throw new IllegalStateException("unreachable");
     }
 
     private void invokeBefore(ExecutionPlan plan, List<ExecutionInterceptor> entered) {
         for (ExecutionInterceptor interceptor : interceptors) {
             interceptor.beforeExecution(plan);
             entered.add(interceptor);
-        }
-    }
-
-    private void invokeTerminal(List<ExecutionInterceptor> entered, ExecutionOutcome outcome) {
-        if (outcome.failed()) {
-            invokeFailure(entered, outcome);
-        } else {
-            invokeSuccess(entered, outcome);
         }
     }
 
@@ -151,7 +158,7 @@ final class InterceptingSqlExecutor implements SqlExecutor {
                 plan, sqlFailure.getExecutionState(), durationNanos, 0, 0, sqlFailure);
         }
         return ExecutionOutcome.failure(
-            plan, JdbcExecutionState.OUTCOME_UNKNOWN, durationNanos, 0, 0, failure);
+            plan, PluginChainContext.jdbcState(), durationNanos, 0, 0, failure);
     }
 
     private void throwIfFailed(ExecutionOutcome outcome) {

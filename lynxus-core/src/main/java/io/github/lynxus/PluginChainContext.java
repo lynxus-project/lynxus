@@ -2,7 +2,8 @@ package io.github.lynxus;
 
 import io.github.lynxus.api.JdbcExecutionState;
 
-final class PluginChainContext {
+/** Internal JDBC-executed flag for the plugin chain. Not an application API. */
+public final class PluginChainContext {
 
     private static final ThreadLocal<JdbcExecutionState> JDBC_STATE =
         ThreadLocal.withInitial(() -> JdbcExecutionState.NOT_EXECUTED);
@@ -14,7 +15,7 @@ final class PluginChainContext {
         JDBC_STATE.set(JdbcExecutionState.NOT_EXECUTED);
     }
 
-    static void markJdbcExecuted() {
+    public static void markJdbcExecuted() {
         JDBC_STATE.set(JdbcExecutionState.EXECUTED);
     }
 

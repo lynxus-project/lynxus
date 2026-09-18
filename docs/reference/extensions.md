@@ -158,6 +158,8 @@ Register `ExecutionInterceptor` instances through `JdbcAssembly`, or expose them
 - `ExecutionPlan` exposes immutable statement input. `ExecutionOutcome` is synthesized from the `next` call: duration is the `next` wall time; successful `SqlResult` values supply affected rows and result count; thrown `SqlExecutionException` supplies execution state and the same failure delivered to the caller.
 - Closed plugin effects on the same `SqlExecutor` chain are observation, replacing an immutable plan, and short-circuiting with a result. A replacement must keep `statementId`, statement type, binders, and row mapper; it may change SQL text, parameters, and statement options. Short-circuit skips inner plugins and JDBC; outer observers see `NOT_EXECUTED`.
 - Plugins must not intercept JDBC prepare, bind, or mapping internals, and must not mutate generated binding or mapping.
+- Terminal callback `RuntimeException` values are logged and isolated. They neither mutate the final failure tree nor prevent remaining terminal interceptors from observing the outcome. JVM `Error` values still propagate and must not be turned into `afterFailure`.
+- Any interceptor callback adds runtime work; configure none when the direct path is preferred.
 
 ## Query Cache Plugin
 
@@ -177,8 +179,6 @@ Register `PagingExecutionPlugin` with a `PaginationDialect` through `JdbcAssembl
 - `LimitOffsetPaginationDialect` appends `LIMIT ? OFFSET ?` and bound limit/offset parameters. PostgreSQL and MySQL share this form. There is no automatic count query and no framework `Page<T>`.
 - Offset and limit must be non-negative. Invalid `PageRequest` fails before `next`.
 - The replacement keeps `statementId`, statement type, binders, and row mapper.
-- Terminal callback `RuntimeException` values are logged and isolated. They neither mutate the final failure tree nor prevent remaining terminal interceptors from observing the outcome. JVM `Error` values still propagate.
-- Any interceptor callback adds runtime work; configure none when the direct path is preferred.
 
 ## Routing And Decorators
 

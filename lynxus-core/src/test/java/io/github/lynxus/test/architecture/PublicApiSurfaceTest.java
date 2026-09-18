@@ -19,6 +19,7 @@ class PublicApiSurfaceTest {
     private static final Set<String> SUPPORTED_PUBLIC_TYPES = Set.of(
         "io.github.lynxus.JdbcAssembly",
         "io.github.lynxus.Lynxus",
+        "io.github.lynxus.PluginChainContext",
         "io.github.lynxus.annotation.Batch",
         "io.github.lynxus.annotation.Delete",
         "io.github.lynxus.annotation.GeneratedKey",

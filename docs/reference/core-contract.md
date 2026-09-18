@@ -17,7 +17,7 @@ Core owns:
 - compile-time Mapper validation, SQL normalization, dynamic SQL generation, parameter ordering, and typed result mapping;
 - generated `*MapperImpl` classes whose only constructor dependency is `SqlExecutor`;
 - immutable execution plans and the fixed JDBC execution lifecycle;
-- typed provider, binder, row-mapper, cursor, interceptor, connection-participation, and transaction-callback contracts;
+- typed provider, binder, row-mapper, cursor, interceptor, execution-plugin, connection-participation, and transaction-callback contracts;
 - a minimal standalone JDBC assembly and local transaction implementation.
 
 Core does not own:
@@ -25,8 +25,9 @@ Core does not own:
 - dependency injection or Mapper bean discovery;
 - connection pooling, routing DataSource implementation, tenant or shard context;
 - declarative transaction propagation, savepoints, distributed transactions, or transaction recovery;
-- schema migration, caching, lazy loading, nested object aggregation, or a MyBatis plugin runtime;
-- SQL-dialect pagination generation. Pagination is expressed as dynamic SQL in the Mapper or provider.
+- schema migration, lazy loading, nested object aggregation, or a MyBatis plugin runtime;
+- session or second-level ORM caches; opt-in SELECT `QueryCache` is a closed short-circuit plugin, not a session cache;
+- PageHelper-style rewrite of arbitrary SQL, automatic count, or framework `Page<T>`. Opt-in LIMIT/OFFSET replace-plan pagination is allowed. Mapper SQL may still express limit/offset directly.
 
 Spring integration is a host adapter. It registers generated classes and supplies Spring-aware connection participation, while the generated Mapper and `JdbcSqlExecutor` remain Spring-neutral.
 
@@ -179,7 +180,7 @@ Generated keys are not supported for batch methods, dynamic SQL, or SQL provider
 
 Generated Mapper methods currently emit default statement options; there is no Mapper `@Options` contract. Custom plan construction may set options explicitly.
 
-`maxRows` is a JDBC safety ceiling, not pagination. Real pagination must place dynamic limit/offset or equivalent dialect SQL in the final SQL text so the database performs bounded work.
+`maxRows` is a JDBC safety ceiling, not pagination. Real pagination must place dynamic limit/offset or equivalent dialect SQL in the final SQL text so the database performs bounded work. The opt-in `PagingExecutionPlugin` does that by replacing an immutable SELECT plan.
 
 ### 2.9 Compile-Time Rejection
 
@@ -287,7 +288,7 @@ Core GA does not promise:
 - complex `resultMap` graphs, nested collections, lazy loading, or second-level cache;
 - runtime Mapper proxies, runtime XML reload, or reflection-based dispatch;
 - same-Mapper multi-DataSource binding;
-- built-in pagination plugins or a pagination DSL;
+- PageHelper-style plugins, a pagination DSL, automatic count, or framework `Page<T>`;
 - automatic retries after `OUTCOME_UNKNOWN`;
 - connection pooling, distributed transactions, or production transaction policy;
 - undocumented compiler implementation classes as public extension APIs.
