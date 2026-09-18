@@ -175,7 +175,7 @@ Register `CachingExecutionPlugin` with a `QueryCache` through `JdbcAssembly.plug
 
 Register `PagingExecutionPlugin` with a `PaginationDialect` through `JdbcAssembly.plugins(...)`. Bind a `PageRequest` on `PageContext` for the current call and clear it afterwards.
 
-- Only `execute` of `SELECT` plans is rewritten. Non-SELECT statements, unbound calls, and `queryCursor` pass through.
+- Only `execute` of `SELECT` plans is paged. Non-SELECT statements, unbound calls, and `queryCursor` pass through. The dialect appends limit/offset to the plan SQL text.
 - `LimitOffsetPaginationDialect` appends `LIMIT ? OFFSET ?` and bound limit/offset parameters. PostgreSQL and MySQL share this form. There is no automatic count query and no framework `Page<T>`.
 - Offset and limit must be non-negative. Invalid `PageRequest` fails before `next`.
 - The replacement keeps `statementId`, statement type, binders, and row mapper.

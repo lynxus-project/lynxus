@@ -16,7 +16,7 @@ Lynxus work is agent-led but user-directed. A large repository is never an excus
 - Establish the project path, revision, authorization to edit, Lynxus revision, and requested output before reading or changing files outside the current workspace.
 - Read the Lynxus checkout's `AGENTS.md`, `docs/README.md`, `docs/reference/core-contract.md`, `docs/reference/extensions.md`, and the relevant user guide before making contract claims.
 - Preserve one Mapper → one DataSource domain. Treat package-to-DataSource bindings, Spring routing, and transaction ownership as explicit decisions.
-- Keep generated Mappers on the public runtime contracts. Do not add sessions, runtime proxies, reflection fallback, runtime XML/OGNL interpretation, session/L2 ORM caches, or a MyBatis-style SQL rewrite chain. Closed-effect `ExecutionPlugin` adapters (observe, replace an immutable plan, short-circuit) are allowed.
+- Keep generated Mappers on the public runtime contracts. Do not add sessions, runtime proxies, reflection fallback, runtime XML/OGNL interpretation, caches, or a general SQL rewrite chain.
 - Do not publish, deploy, push, open pull requests, or change issue state unless the user explicitly authorizes that action.
 - Never silently convert ambiguous SQL, result graphs, dynamic expressions, lifecycle-bound JDBC values, or transaction behavior. Record an intervention and ask.
 

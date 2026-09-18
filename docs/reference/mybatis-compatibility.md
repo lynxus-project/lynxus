@@ -98,8 +98,8 @@ handler-by-handler JDBC table.
 | Local transactions | Direct support | Use one `JdbcAssembly` and its callback transaction executor. Nested failures preserve rollback-only semantics. | [Core contract](core-contract.md#5-standalone-transaction-contract) |
 | Spring transaction participation | Deterministic conversion | Use the Spring starter for DataSource binding and transaction participation. Spring owns transaction policy; Core still owns JDBC execution. | [Extension contracts](extensions.md), [Spring guide](../user/spring/spring-boot.md) |
 | Advanced propagation, savepoints, distributed transactions, and recovery | Explicit rejection | Delegate host transaction policy to Spring or another transaction system. Lynxus does not coordinate distributed commits. | [Core contract](core-contract.md#5-standalone-transaction-contract) |
-| First/second-level cache | Explicit rejection | MyBatis session L1/L2 caches stay rejected. Opt-in `QueryCache` is a SELECT short-circuit plugin, not a session identity map. | [Design philosophy](../../Design-Philosophy.md#explicit-non-goals), [Extension contracts](extensions.md) |
-| MyBatis plugin/interceptor chain | Explicit rejection | Do not port `proceed()` over statement/parameter/result handlers. Use `ExecutionInterceptor` for observation and `ExecutionPlugin` for observe / replace-plan / short-circuit around `SqlExecutor`. | [Extension contracts](extensions.md), [Core contract](core-contract.md#3-jdbc-execution-contract) |
+| First/second-level cache | Explicit rejection | Use an application cache outside Lynxus. | [Design philosophy](../../Design-Philosophy.md#explicit-non-goals) |
+| MyBatis plugin/interceptor chain | Explicit rejection | Use the narrow `ExecutionInterceptor` observation contract for logging, metrics, tracing, audit, and authorization. It cannot rewrite SQL or own JDBC execution. | [Extension contracts](extensions.md), [Core contract](core-contract.md#3-jdbc-execution-contract) |
 | Runtime Mapper proxies | Explicit rejection | Use generated implementation classes directly or register them through the Spring starter. | [Core contract](core-contract.md#1-responsibility-boundary) |
 
 ## Migration Decision Rules
@@ -107,7 +107,7 @@ handler-by-handler JDBC table.
 1. Keep a method in annotations or XML when its SQL, parameters, dynamic branches, and flat result shape fit a `direct support` or `deterministic conversion` row.
 2. Use a typed provider, binder, row mapper, interceptor, or Spring adapter only when the corresponding Lynxus contract owns the behavior.
 3. Send ambiguous or project-wide transformations to the migration skill. It must produce a reviewable diff and intervention report rather than guess.
-4. Stop and report the construct for `explicit rejection`; do not add runtime reflection, OGNL, a global registry, a session abstraction, or a MyBatis-style SQL-rewrite plugin chain to bypass the boundary.
+4. Stop and report the construct for `explicit rejection`; do not add runtime reflection, OGNL, a global registry, a session abstraction, or a SQL-rewrite plugin to bypass the boundary.
 
 The manual workflow is documented in [Migrating From MyBatis](../user/migration/from-mybatis.md). The
 automated, reviewable workflow is owned by issue #10 and must consume this matrix rather than copy it.

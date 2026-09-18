@@ -25,9 +25,8 @@ Core does not own:
 - dependency injection or Mapper bean discovery;
 - connection pooling, routing DataSource implementation, tenant or shard context;
 - declarative transaction propagation, savepoints, distributed transactions, or transaction recovery;
-- schema migration, lazy loading, nested object aggregation, or a MyBatis plugin runtime;
-- session or second-level ORM caches; opt-in SELECT `QueryCache` is a closed short-circuit plugin, not a session cache;
-- PageHelper-style rewrite of arbitrary SQL, automatic count, or framework `Page<T>`. Opt-in LIMIT/OFFSET replace-plan pagination is allowed. Mapper SQL may still express limit/offset directly.
+- schema migration, caching, lazy loading, nested object aggregation, or a MyBatis plugin runtime;
+- SQL-dialect pagination generation. Pagination is expressed as dynamic SQL in the Mapper or provider.
 
 Spring integration is a host adapter. It registers generated classes and supplies Spring-aware connection participation, while the generated Mapper and `JdbcSqlExecutor` remain Spring-neutral.
 
@@ -180,7 +179,7 @@ Generated keys are not supported for batch methods, dynamic SQL, or SQL provider
 
 Generated Mapper methods currently emit default statement options; there is no Mapper `@Options` contract. Custom plan construction may set options explicitly.
 
-`maxRows` is a JDBC safety ceiling, not pagination. Real pagination must place dynamic limit/offset or equivalent dialect SQL in the final SQL text so the database performs bounded work. The opt-in `PagingExecutionPlugin` does that by replacing an immutable SELECT plan.
+`maxRows` is a JDBC safety ceiling, not pagination. Real pagination must place dynamic limit/offset or equivalent dialect SQL in the final SQL text so the database performs bounded work.
 
 ### 2.9 Compile-Time Rejection
 
@@ -288,7 +287,7 @@ Core GA does not promise:
 - complex `resultMap` graphs, nested collections, lazy loading, or second-level cache;
 - runtime Mapper proxies, runtime XML reload, or reflection-based dispatch;
 - same-Mapper multi-DataSource binding;
-- PageHelper-style plugins, a pagination DSL, automatic count, or framework `Page<T>`;
+- built-in pagination plugins or a pagination DSL;
 - automatic retries after `OUTCOME_UNKNOWN`;
 - connection pooling, distributed transactions, or production transaction policy;
 - undocumented compiler implementation classes as public extension APIs.
