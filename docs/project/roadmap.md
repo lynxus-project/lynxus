@@ -39,6 +39,21 @@ Complete artifact metadata, license and repository checks, reproducible release 
 - Build a read-only MyBatis compatibility scanner before any deterministic safe rewriter.
 - Validate migration tooling against licensed external projects before claiming broad compatibility.
 
+## Next MyBatis Compatibility Issue
+
+The current executor and compiler provide a deterministic MyBatis-shaped subset, not a runtime
+replacement for MyBatis. The next compatibility issue should measure and prioritize the remaining
+gap without weakening Lynxus's fixed JDBC ownership:
+
+- close the remaining deterministic JDBC and type-handler parity gaps;
+- complete the controlled XML and dynamic-SQL compatibility classification;
+- decide whether nested `resultMap` graphs are supported through explicit conversion or remain a
+  migration boundary;
+- preserve the explicit non-goals for `SqlSession`, session cache, lazy loading, automatic count,
+  framework pagination, and the full MyBatis plugin runtime;
+- produce migration-scanner evidence and external compatibility fixtures before claiming broader
+  MyBatis coverage.
+
 ## Optional Tooling
 
 A DB-to-Mapper generator may ship on an independent version track after Core, processor, XML, and artifact contracts stabilize. New ecosystem features require demonstrated user demand, a named owner, an executable contract, and a design that preserves Lynxus's fixed runtime boundaries.

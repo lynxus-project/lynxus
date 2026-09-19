@@ -29,6 +29,7 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.Executors;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
@@ -44,7 +45,8 @@ abstract class LynxusAutoConfigurationTest {
             SpringUserMapper mapper = context.getBean(SpringUserMapper.class);
             EventLog events = context.getBean(EventLog.class);
 
-            assertInstanceOf(JdbcSqlExecutor.class, executor);
+            assertFalse(executor instanceof JdbcSqlExecutor,
+                "observational interceptors must wrap SqlExecutor outside JdbcSqlExecutor");
             assertSame(mapper, context.getBean("springUserMapper"));
             assertEquals(1, mapper.insert(1L, "Alice"));
             assertEquals(new SpringUser(1L, "Alice"), mapper.findById(1L));

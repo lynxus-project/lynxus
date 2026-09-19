@@ -1,8 +1,32 @@
 # Lynxus Context
 
-Lynxus compiles Mapper declarations into explicit JDBC execution plans and generated implementations. This glossary defines the project-specific language used to describe compilation, execution ownership, and terminal outcomes.
+Lynxus is a compile-time Java ORM. It compiles Mapper declarations into explicit JDBC execution plans and generated implementations. This glossary defines the project-specific language used to describe product identity, compilation, execution ownership, and terminal outcomes.
 
 ## Language
+
+**Compile-time Java ORM**:
+Lynxus's product identity. Object-relational mapping is compiled from Mapper declarations into ordinary Java and executed through JDBC.
+_Avoid_: mapper tool, SQL Mapper as the product name, lightweight mapper, Hibernate alternative, JPA replacement
+
+**Mapper**:
+The authoring unit of this ORM: one Java interface plus optional XML, compiled into one generated implementation bound to one DataSource domain. Mapper is not the product name.
+_Avoid_: mapper tool, using Mapper as the product name
+
+**MyBatis compatibility baseline**:
+MyBatis 3.5.x deterministic mapping behavior is the comparison and migration baseline. Hibernate and JPA are not the competitive target.
+_Avoid_: Hibernate comparison, JPA feature matrix as the product story
+
+**Runtime interpretation**:
+Evaluating Mapper XML, OGNL, or equivalent scripts while a Mapper method runs. Lynxus never does this; javac compiles supported declarations into ordinary Java. Runtime XML and OGNL are not missing features and are not backlog items.
+_Avoid_: treating runtime XML or OGNL as a gap, MyBatis plugin chain as a Lynxus extension
+
+**Typed extension**:
+A user-supplied interface implementation bound at compile time or executor assembly and invoked by generated code or the executor. A feature can exist this way without being fully generated and without runtime XML or OGNL.
+_Avoid_: MyBatis plugin, general SQL-rewrite chain, treating compile-time and feature as the same decision
+
+**Execution plugin chain**:
+The ordered adapters around `SqlExecutor` that own executor-level policy. Innermost adapter is `JdbcSqlExecutor`. Effects are observation, replacing an immutable plan, and short-circuiting with a result.
+_Avoid_: JDBC phase chain, MyBatis `proceed()` on statement handlers, putting cache or pagination inside `JdbcSqlExecutor`
 
 **Mapper SQL method**:
 A Mapper method backed by a Lynxus SQL annotation, Mapper XML statement, or typed SQL provider. Two effective Mapper SQL methods with the same name are overloaded even when their parameter types differ.

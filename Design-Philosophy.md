@@ -6,9 +6,9 @@
 
 ## Purpose
 
-Lynxus exists to provide a smaller and more predictable SQL Mapper for Java teams that value explicit SQL, compile-time feedback, readable generated code, and direct JDBC behavior.
+Lynxus exists to provide a smaller and more predictable compile-time Java ORM for teams that value explicit SQL, compile-time feedback, readable generated code, and direct JDBC behavior. It is not a mapper tool and not a Hibernate or JPA Session ORM.
 
-MyBatis 3.5.x is Lynxus's compatibility baseline for deterministic SQL Mapper behavior and JDBC value types. Lynxus does not copy MyBatis runtime architecture, but a migration should not lose a deterministic mapping merely because Lynxus omitted the corresponding built-in type. Success means teams can adopt Lynxus through normal Maven or Gradle dependencies, migrate supported Mapper code with limited friction, understand generated behavior, and diagnose failures without framework internals.
+MyBatis 3.5.x is Lynxus's compatibility baseline for deterministic mapping behavior and JDBC value types. Lynxus does not copy MyBatis runtime architecture, but a migration should not lose a deterministic mapping merely because Lynxus omitted the corresponding built-in type. Success means teams can adopt Lynxus through normal Maven or Gradle dependencies, migrate supported Mapper code with limited friction, understand generated behavior, and diagnose failures without framework internals. Hibernate is not the comparison target.
 
 ## Core Model
 
@@ -71,7 +71,7 @@ Lynxus does not expose a session abstraction and does not use runtime Mapper pro
 
 ### Keep One JDBC Lifecycle
 
-`JdbcSqlExecutor` owns the physical statement lifecycle. Standalone and hosted integrations may replace connection participation and transaction ownership, but they must not fork or reimplement statement preparation, binding, execution, result reading, mapping, cleanup, or interceptor completion.
+`JdbcSqlExecutor` owns the physical statement lifecycle and final outcome formation. Standalone and hosted integrations may replace connection participation and transaction ownership, but they must not fork or reimplement statement preparation, binding, execution, result reading, mapping, or cleanup. Terminal interceptor observation remains outside that JDBC lifecycle.
 
 Every acquired resource has one owner. Cleanup failures remain observable, original failures remain primary, and terminal observation failures do not overwrite SQL or cleanup failures.
 
@@ -115,7 +115,7 @@ Established design patterns are tools for recurring problems, not goals by thems
 
 Do not apply SOLID principles, design patterns, abstraction rules, or architectural styles mechanically. Use them only when they make the design easier to understand, verify, maintain, and change.
 
-For Lynxus, this keeps the runtime contract cohesive, separates compiler and integration concerns, and allows exceptional behavior through narrow typed contracts such as `SqlProvider`, `ParameterBinder`, `RowMapper`, `ExecutionInterceptor`, and `ConnectionHandleFactory`. These extensions must not replace the fixed JDBC lifecycle or become a general runtime plugin chain.
+For Lynxus, this keeps the runtime contract cohesive, separates compiler and integration concerns, and allows exceptional behavior through narrow typed contracts such as `SqlProvider`, `ParameterBinder`, `RowMapper`, `ExecutionInterceptor`, `ExecutionPlugin`, and `ConnectionHandleFactory`. These extensions must not replace the fixed JDBC lifecycle or become a general runtime plugin chain.
 
 ### Keep DataSource Ownership Unambiguous
 
@@ -125,7 +125,7 @@ Spring may provide IoC, transaction managers, physical DataSources, and ordered 
 
 ## Compatibility Philosophy
 
-Lynxus supports common SQL Mapper work directly, converts some MyBatis patterns into static Lynxus forms, and rejects features that depend on session state, runtime interpretation, complex object graphs, or hidden framework policy.
+Lynxus supports common Mapper authoring directly, converts some MyBatis patterns into static Lynxus forms, and rejects features that depend on session state, runtime interpretation, complex object graphs, or hidden framework policy.
 
 Deterministic MyBatis JDBC value behavior is a compatibility target. Lynxus generates Java type information and uses a fixed Core `TypeHandlerManager` to combine it with optional parameter `jdbcType` declarations or live result metadata. Generated result assemblers still construct records and JavaBeans directly inside the executor lifecycle. Unsupported scalar representations use an explicit `ParameterBinder` or `RowMapper`; package mappings, database-specific routing, unknown-object fallback, reflection-based construction, global registries, and resource values that cannot survive the fixed JDBC cleanup boundary remain outside the contract.
 
@@ -135,7 +135,7 @@ Direct support focuses on:
 - controlled dynamic SQL;
 - scalar, record, JavaBean, list, optional, cursor, batch, and generated-key contracts;
 - explicit transactions and DataSource bindings;
-- typed providers, binders, row mappers, and interceptors.
+- typed providers, binders, row mappers, interceptors, and execution plugins.
 
 Migration tooling may rewrite deterministic syntax. It must report rather than guess when encountering complex `resultMap` graphs, nested queries, arbitrary OGNL, plugins, caches, or ambiguous Spring configuration.
 
@@ -143,13 +143,13 @@ Migration tooling may rewrite deterministic syntax. It must report rather than g
 
 Lynxus does not add:
 
-- first-level or second-level ORM caches;
+- first-level, second-level, or session-scoped ORM caches;
 - `SqlSession`;
 - runtime XML reload or OGNL interpretation;
 - lazy loading or complex relationship graphs;
 - automatic count queries or framework pagination models;
 - distributed transaction management;
-- runtime SQL rewriting plugins;
+- a general runtime SQL phase/plugin chain;
 - full MyBatis plugin or API compatibility;
 - one Mapper dynamically bound to multiple DataSources.
 

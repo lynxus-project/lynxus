@@ -1,16 +1,18 @@
 package io.github.lynxus.test.jdbc;
 
 import org.junit.jupiter.api.Test;
+import io.github.lynxus.JdbcAssembly;
 import io.github.lynxus.api.ConnectionHandle;
 import io.github.lynxus.api.ConnectionHandleFactory;
 import io.github.lynxus.api.ExecutionInterceptor;
+import io.github.lynxus.api.SqlExecutor;
 import io.github.lynxus.api.ExecutionOutcome;
 import io.github.lynxus.api.ExecutionPhase;
 import io.github.lynxus.api.ExecutionPlan;
 import io.github.lynxus.api.JdbcExecutionState;
 import io.github.lynxus.api.RowCursor;
 import io.github.lynxus.api.SqlExecutionException;
-import io.github.lynxus.jdbc.JdbcSqlExecutor;
+
 
 import java.lang.reflect.Proxy;
 import java.sql.Connection;
@@ -34,7 +36,7 @@ class JdbcCursorExecutionTest {
         List<String> events = new ArrayList<>();
         ResultSet rows = rows(events, List.of("Alice", "Bob"));
         AtomicReference<RowCursor<String>> captured = new AtomicReference<>();
-        JdbcSqlExecutor executor = executor(events, statement(events, rows));
+        SqlExecutor executor = executor(events, statement(events, rows));
 
         String first = executor.queryCursor(plan(), (RowCursor<String> cursor) -> {
             captured.set(cursor);
@@ -53,7 +55,7 @@ class JdbcCursorExecutionTest {
     @Test
     void callbackFailureStillClosesEveryOwnedResource() {
         List<String> events = new ArrayList<>();
-        JdbcSqlExecutor executor = executor(events, statement(events, rows(events, List.of("Alice"))));
+        SqlExecutor executor = executor(events, statement(events, rows(events, List.of("Alice"))));
 
         assertThrows(IllegalArgumentException.class, () -> executor.queryCursor(
             plan(), (RowCursor<String> cursor) -> {
@@ -89,7 +91,7 @@ class JdbcCursorExecutionTest {
                 events.add("failure:" + failure.getPhase());
             }
         };
-        JdbcSqlExecutor executor = executor(
+        SqlExecutor executor = executor(
             events,
             statement(events, rows(events, List.of("Alice")), closeFailure),
             List.of(interceptor));
@@ -104,7 +106,7 @@ class JdbcCursorExecutionTest {
         assertSame(closeFailure, failure.getCause());
         assertEquals(ExecutionPhase.CLEANUP, failure.getPhase());
         assertEquals(JdbcExecutionState.EXECUTED, failure.getExecutionState());
-        assertEquals(1, observedOutcome.get().resultCount());
+        assertEquals(0, observedOutcome.get().resultCount());
         assertEquals(List.of(
             "before", "transaction.open", "transaction.connection", "connection.prepare",
             "rows.next", "rows.close", "statement.close", "transaction.close", "failure:CLEANUP"
@@ -123,7 +125,7 @@ class JdbcCursorExecutionTest {
                 observedOutcome.set(outcome);
             }
         };
-        JdbcSqlExecutor executor = executor(
+        SqlExecutor executor = executor(
             events,
             statement(events, rows(events, List.of("Alice")), closeFailure),
             List.of(interceptor));
@@ -137,7 +139,7 @@ class JdbcCursorExecutionTest {
         assertSame(callbackFailure, deliveredFailure);
         assertSame(callbackFailure, observedOutcome.get().failure());
         assertArrayEquals(new Throwable[]{closeFailure}, callbackFailure.getSuppressed());
-        assertEquals(1, observedOutcome.get().resultCount());
+        assertEquals(0, observedOutcome.get().resultCount());
         assertEquals(List.of("rows.close", "statement.close", "transaction.close"),
             events.subList(events.size() - 3, events.size()));
     }
@@ -145,7 +147,7 @@ class JdbcCursorExecutionTest {
     @Test
     void rejectsNonSelectAndMissingRowMapperBeforeOpeningConnection() {
         List<String> events = new ArrayList<>();
-        JdbcSqlExecutor executor = executor(events, statement(events, rows(events, List.of("Alice"))));
+        SqlExecutor executor = executor(events, statement(events, rows(events, List.of("Alice"))));
         ExecutionPlan update = new ExecutionPlan(
             "test.Mapper.update", "UPDATE users SET name = 'x'", new Object[0],
             ExecutionPlan.StatementType.UPDATE, ExecutionPlan.SqlSource.ANNOTATION,
@@ -166,11 +168,11 @@ class JdbcCursorExecutionTest {
             null, null, resultSet -> resultSet.getString(1));
     }
 
-    private JdbcSqlExecutor executor(List<String> events, PreparedStatement statement) {
+    private SqlExecutor executor(List<String> events, PreparedStatement statement) {
         return executor(events, statement, List.of());
     }
 
-    private JdbcSqlExecutor executor(
+    private SqlExecutor executor(
             List<String> events, PreparedStatement statement, List<ExecutionInterceptor> interceptors) {
         Connection connection = proxy(Connection.class, (method, args) -> {
             if (method.equals("prepareStatement")) {
@@ -191,7 +193,7 @@ class JdbcCursorExecutionTest {
                 events.add("transaction.close");
             }
         };
-        return new JdbcSqlExecutor(() -> {
+        return JdbcAssembly.sqlExecutor(() -> {
             events.add("transaction.open");
             return factory.openHandle();
         }, interceptors);

@@ -17,7 +17,7 @@ Core owns:
 - compile-time Mapper validation, SQL normalization, dynamic SQL generation, parameter ordering, and typed result mapping;
 - generated `*MapperImpl` classes whose only constructor dependency is `SqlExecutor`;
 - immutable execution plans and the fixed JDBC execution lifecycle;
-- typed provider, binder, row-mapper, cursor, interceptor, connection-participation, and transaction-callback contracts;
+- typed provider, binder, row-mapper, cursor, interceptor, execution-plugin, connection-participation, and transaction-callback contracts;
 - a minimal standalone JDBC assembly and local transaction implementation.
 
 Core does not own:
@@ -25,8 +25,10 @@ Core does not own:
 - dependency injection or Mapper bean discovery;
 - connection pooling, routing DataSource implementation, tenant or shard context;
 - declarative transaction propagation, savepoints, distributed transactions, or transaction recovery;
-- schema migration, caching, lazy loading, nested object aggregation, or a MyBatis plugin runtime;
-- SQL-dialect pagination generation. Pagination is expressed as dynamic SQL in the Mapper or provider.
+- schema migration, session-scoped cache lifecycle or invalidation, lazy loading, nested object
+  aggregation, or a MyBatis plugin runtime;
+- framework pagination models or automatic count queries. Explicit `PaginationDialect` adapters may
+  replace a SELECT plan at the `SqlExecutor` boundary.
 
 Spring integration is a host adapter. It registers generated classes and supplies Spring-aware connection participation, while the generated Mapper and `JdbcSqlExecutor` remain Spring-neutral.
 
@@ -187,16 +189,18 @@ Unsupported Mapper behavior fails compilation instead of falling back to runtime
 
 ## 3. JDBC Execution Contract
 
-`JdbcSqlExecutor` owns this fixed order:
+`JdbcSqlExecutor` owns this fixed JDBC order:
 
 ```text
-validate -> before interceptors -> open handle -> acquire connection
+validate -> open handle -> acquire connection
 -> prepare -> apply statement options -> bind -> execute -> read/map
 -> deactivate cursor -> close ResultSet -> close statement -> close handle
--> form final outcome -> terminal interceptors
+-> form final outcome
 ```
 
-The sequence is not a pluggable phase chain. SQL structure, value binding, row mapping, observation, and host connection participation use their dedicated typed contracts.
+Observational `ExecutionInterceptor` instances wrap `SqlExecutor` outside that JDBC lifecycle. Registration order is outer to inner: `before` callbacks run, then `next` (ultimately JDBC), then reverse `afterSuccess` / `afterFailure`. The adapter synthesizes `ExecutionOutcome` from the `next` call; duration is the `next` wall time and includes JDBC cleanup. Terminal adapter callback failures stay isolated.
+
+The JDBC sequence is not a pluggable phase chain. SQL structure, value binding, row mapping, observation, and host connection participation use their dedicated typed contracts.
 
 Standalone and hosted integrations share this exact executor lifecycle. A host may supply connection participation and own transaction completion, but it does not prepare statements, bind values, execute SQL, read or map results, close executor-owned resources, or publish execution outcomes.
 
@@ -282,12 +286,12 @@ Database-backed Core compatibility, multi-DataSource, concurrency, and transacti
 Core GA does not promise:
 
 - arbitrary OGNL or complete MyBatis XML compatibility;
-- complex `resultMap` graphs, nested collections, lazy loading, or second-level cache;
+- complex `resultMap` graphs, nested collections, lazy loading, or session-scoped/second-level cache;
 - runtime Mapper proxies, runtime XML reload, or reflection-based dispatch;
 - same-Mapper multi-DataSource binding;
-- built-in pagination plugins or a pagination DSL;
+- automatic count queries, framework pagination models, or a pagination DSL;
 - automatic retries after `OUTCOME_UNKNOWN`;
 - connection pooling, distributed transactions, or production transaction policy;
-- undocumented compiler implementation classes as public extension APIs.
+- undocumented compiler implementation classes or JDBC phase interceptors as public extension APIs.
 
 Future capabilities must preserve these ownership boundaries or update this contract with executable tests.

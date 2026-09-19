@@ -73,7 +73,7 @@ lynxus:
 
 A host integration may provide a `ConnectionHandleFactory` that participates in host-bound connections and may own transaction commit or rollback. These are the only lifecycle responsibilities replaced by the host.
 
-`JdbcSqlExecutor` always owns statement preparation, statement options, parameter binding, SQL execution, generated-key handling, result reading, result mapping, cursor deactivation, executor-owned cleanup, final outcome formation, and terminal interceptor delivery. Spring Starter assembles and reuses that core executor; it must not copy, wrap into a second phase lifecycle, or reimplement those JDBC operations.
+`JdbcSqlExecutor` always owns statement preparation, statement options, parameter binding, SQL execution, generated-key handling, result reading, result mapping, cursor deactivation, executor-owned cleanup, and final outcome formation. The outer `InterceptingSqlExecutor` delivers terminal interceptor observations. Spring Starter assembles and reuses that executor graph; it must not copy, wrap into a second phase lifecycle, or reimplement those JDBC operations.
 
 Closing a host-aware `ConnectionHandle` releases one executor participation. It does not claim that the physical connection was closed or that the host transaction committed or rolled back. Transaction completion remains outside `ExecutionOutcome`.
 
@@ -152,12 +152,35 @@ Use `@UseRowMapper` on a query method with a concrete `RowMapper<T>`.
 
 Register `ExecutionInterceptor` instances through `JdbcAssembly`, or expose them as ordered Spring beans with the starter.
 
-- `beforeExecution` runs in configured order.
-- `afterSuccess` and `afterFailure` run after executor-owned cleanup, in reverse order for interceptors whose before callback completed successfully.
-- `ExecutionPlan` exposes immutable statement input and `ExecutionOutcome` exposes duration, affected rows, result count, and failure.
-- The MVP contract is observational. It does not allow arbitrary SQL replacement or reflective mutation of generated binding and mapping.
-- Terminal callback `RuntimeException` values are logged and isolated. They neither mutate the final failure tree nor prevent remaining terminal interceptors from observing the outcome. JVM `Error` values still propagate.
+- `JdbcAssembly` and the Spring starter wrap ordered interceptors around `JdbcSqlExecutor`; generated Mappers still receive one `SqlExecutor`.
+- `beforeExecution` runs in configured order before `next`.
+- `afterSuccess` and `afterFailure` run after `next` returns or throws, in reverse order for interceptors whose before callback completed successfully. JDBC cleanup has already finished because it belongs to innermost `JdbcSqlExecutor`.
+- `ExecutionPlan` exposes immutable statement input. `ExecutionOutcome` is synthesized from the `next` call: duration is the `next` wall time; successful `SqlResult` values supply affected rows and result count; thrown `SqlExecutionException` supplies execution state and the same failure delivered to the caller.
+- Closed plugin effects on the same `SqlExecutor` chain are observation, replacing an immutable plan, and short-circuiting with a result. A replacement must keep `statementId`, SQL source, statement type, generated-key configuration, binders, row mapper, and type routing; it may change SQL text, parameters, and statement options. Short-circuit skips inner plugins and JDBC; outer observers see `NOT_EXECUTED`.
+- Plugins must not intercept JDBC prepare, bind, or mapping internals, and must not mutate generated binding or mapping.
+- Terminal callback `RuntimeException` values are logged and isolated. They neither mutate the final failure tree nor prevent remaining terminal interceptors from observing the outcome. JVM `Error` values still propagate and must not be turned into `afterFailure`.
 - Any interceptor callback adds runtime work; configure none when the direct path is preferred.
+
+## Query Cache Plugin
+
+Register `CachingExecutionPlugin` with a `QueryCache` through `JdbcAssembly.plugins(...)`.
+
+- Only `execute` of `SELECT` plans is cached. The built-in adapter keys by statement identity,
+  final SQL, active page coordinates, and a defensive copy of parameter values, so dynamic SQL,
+  providers, and different pages cannot alias one cache entry.
+- A hit short-circuits `next` and JDBC. Outer observers see `NOT_EXECUTED`.
+- A miss calls `next` unchanged and stores a successful `SqlResult`. Failures are not stored.
+- Insert, update, delete, batch, and `queryCursor` pass through. Writes do not invalidate the cache; invalidation is follow-on. This adapter is opt-in and SELECT-only.
+- `MemoryQueryCache` is a concurrent in-memory implementation with no eviction.
+
+## Pagination Plugin
+
+Register `PagingExecutionPlugin` with a `PaginationDialect` through `JdbcAssembly.plugins(...)`. Bind a `PageRequest` on `PageContext` for the current call and clear it afterwards.
+
+- Only `execute` of `SELECT` plans is paged. Non-SELECT statements, unbound calls, and `queryCursor` pass through. The dialect appends limit/offset to the plan SQL text.
+- `LimitOffsetPaginationDialect` appends `LIMIT ? OFFSET ?` and bound limit/offset parameters. PostgreSQL and MySQL share this form. There is no automatic count query and no framework `Page<T>`.
+- Offset and limit must be non-negative. Invalid `PageRequest` fails before `next`.
+- The replacement keeps `statementId`, SQL source, statement type, generated-key configuration, binders, row mapper, and type routing.
 
 ## Routing And Decorators
 

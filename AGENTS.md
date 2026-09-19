@@ -31,7 +31,7 @@ Lynxus uses one root domain context with repository-wide ADRs. See `docs/contrib
 
 ## Project Mission
 
-Lynxus is a lightweight compile-time SQL Mapper for Java. It moves Mapper validation, dynamic SQL compilation, parameter planning, and result-mapping generation to javac while keeping runtime execution explicit and JDBC-based.
+Lynxus is a compile-time Java ORM. It moves Mapper validation, dynamic SQL compilation, parameter planning, and result-mapping generation to javac while keeping runtime execution explicit and JDBC-based. Do not describe Lynxus as a mapper tool. The competitive baseline is MyBatis, not Hibernate.
 
 ## Non-Negotiable Architecture
 
@@ -41,7 +41,11 @@ Lynxus is a lightweight compile-time SQL Mapper for Java. It moves Mapper valida
 - One Mapper belongs to one DataSource domain.
 - Runtime artifacts must not contain the annotation processor, FreeMarker, or another template engine.
 - Mapper XML and annotation scripts are compiled; Lynxus does not interpret XML or OGNL at runtime.
-- Do not add `SqlSession`, runtime Mapper proxies, ORM caches, lazy loading, automatic count queries, framework `Page<T>`, or a general SQL-rewrite plugin chain.
+- Do not add `SqlSession`, runtime Mapper proxies, session-scoped ORM caches, lazy loading,
+  automatic count queries, framework `Page<T>`, or a general JDBC phase/plugin chain.
+  Explicitly registered whole-execution adapters around `SqlExecutor` may observe, replace a
+  plan, or short-circuit an execution, but they must not intercept JDBC phases or mutate generated
+  binding and mapping.
 
 ## Agent Tooling Policy
 
@@ -65,6 +69,7 @@ Lynxus is a lightweight compile-time SQL Mapper for Java. It moves Mapper valida
 - Avoid speculative abstractions, compatibility layers, and configuration switches.
 - Introduce an abstraction only when it owns a concrete invariant, isolates a volatile responsibility, or serves demonstrated current use; never add one solely for hypothetical reuse.
 - Define the observable success criteria and the command or test that proves them before implementing a non-trivial change.
+- Do not recast Non-Negotiable Architecture or Explicit Non-Goals to accommodate a feature. Put adapter contracts in `docs/reference/extensions.md`. Changing those pinned sections requires updating the goldens in `NonNegotiableArchitectureTextTest` in the same change.
 - Do not mix unrelated cleanup into a focused change.
 - Never silently swallow compiler, JDBC, cleanup, transaction, or resource failures.
 - Do not place Testcontainers or test-support dependencies on a user runtime classpath.
