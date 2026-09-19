@@ -3,8 +3,9 @@ package io.github.lynxus.api;
 import java.util.Optional;
 
 /**
- * Stores successful SELECT {@link SqlResult} values keyed by statement id and parameter values.
- * Implementations must copy keys on write. This is not a session identity map.
+ * Stores successful SELECT {@link SqlResult} values keyed by an execution identity and parameter
+ * values. The built-in adapter includes the statement's final SQL and active page coordinates in
+ * that identity. Implementations must copy keys on write. This is not a session identity map.
  */
 public interface QueryCache {
 

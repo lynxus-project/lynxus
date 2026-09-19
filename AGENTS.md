@@ -41,7 +41,11 @@ Lynxus is a compile-time Java ORM. It moves Mapper validation, dynamic SQL compi
 - One Mapper belongs to one DataSource domain.
 - Runtime artifacts must not contain the annotation processor, FreeMarker, or another template engine.
 - Mapper XML and annotation scripts are compiled; Lynxus does not interpret XML or OGNL at runtime.
-- Do not add `SqlSession`, runtime Mapper proxies, ORM caches, lazy loading, automatic count queries, framework `Page<T>`, or a general SQL-rewrite plugin chain.
+- Do not add `SqlSession`, runtime Mapper proxies, session-scoped ORM caches, lazy loading,
+  automatic count queries, framework `Page<T>`, or a general JDBC phase/plugin chain.
+  Explicitly registered whole-execution adapters around `SqlExecutor` may observe, replace a
+  plan, or short-circuit an execution, but they must not intercept JDBC phases or mutate generated
+  binding and mapping.
 
 ## Agent Tooling Policy
 

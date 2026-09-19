@@ -50,7 +50,9 @@ public final class JdbcAssembly {
             List<ExecutionInterceptor> interceptors,
             List<ExecutionPlugin> plugins) {
         return InterceptingSqlExecutor.wrap(
-            new JdbcSqlExecutor(connectionHandleFactory), interceptors, plugins);
+            new JdbcSqlExecutor(connectionHandleFactory, PluginChainContext::markJdbcExecuted),
+            interceptors,
+            plugins);
     }
 
     public static final class Builder {

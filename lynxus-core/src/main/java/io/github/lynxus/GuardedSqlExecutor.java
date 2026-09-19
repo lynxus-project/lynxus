@@ -42,15 +42,38 @@ final class GuardedSqlExecutor implements SqlExecutor {
         if (original.getStatementType() != candidate.getStatementType()) {
             throw new IllegalArgumentException("plugin cannot replace statement type");
         }
+        if (original.getSourceType() != candidate.getSourceType()) {
+            throw new IllegalArgumentException("plugin cannot replace SQL source");
+        }
+        if (!Objects.equals(original.getGeneratedKeyColumn(), candidate.getGeneratedKeyColumn())) {
+            throw new IllegalArgumentException("plugin cannot replace generated-key configuration");
+        }
         if (!sameBinders(original.getParameterBinders(), candidate.getParameterBinders())) {
             throw new IllegalArgumentException("plugin cannot replace parameter binders");
         }
         if (original.getRowMapper() != candidate.getRowMapper()) {
             throw new IllegalArgumentException("plugin cannot replace row mapper");
         }
+        if (!sameTypeRouting(original.getTypeRouting(), candidate.getTypeRouting())) {
+            throw new IllegalArgumentException("plugin cannot replace type routing");
+        }
     }
 
     private static boolean sameBinders(ParameterBinder<?>[] left, ParameterBinder<?>[] right) {
         return Arrays.equals(left, right);
+    }
+
+    private static boolean sameTypeRouting(
+            ExecutionPlan.TypeRouting left, ExecutionPlan.TypeRouting right) {
+        if (left == right) {
+            return true;
+        }
+        if (left == null || right == null) {
+            return false;
+        }
+        return Arrays.equals(left.parameterTypes(), right.parameterTypes())
+            && Arrays.equals(left.parameterJdbcTypes(), right.parameterJdbcTypes())
+            && Arrays.equals(left.resultTypes(), right.resultTypes())
+            && Arrays.equals(left.resultColumnLabels(), right.resultColumnLabels());
     }
 }

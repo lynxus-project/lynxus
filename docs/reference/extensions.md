@@ -156,7 +156,7 @@ Register `ExecutionInterceptor` instances through `JdbcAssembly`, or expose them
 - `beforeExecution` runs in configured order before `next`.
 - `afterSuccess` and `afterFailure` run after `next` returns or throws, in reverse order for interceptors whose before callback completed successfully. JDBC cleanup has already finished because it belongs to innermost `JdbcSqlExecutor`.
 - `ExecutionPlan` exposes immutable statement input. `ExecutionOutcome` is synthesized from the `next` call: duration is the `next` wall time; successful `SqlResult` values supply affected rows and result count; thrown `SqlExecutionException` supplies execution state and the same failure delivered to the caller.
-- Closed plugin effects on the same `SqlExecutor` chain are observation, replacing an immutable plan, and short-circuiting with a result. A replacement must keep `statementId`, statement type, binders, and row mapper; it may change SQL text, parameters, and statement options. Short-circuit skips inner plugins and JDBC; outer observers see `NOT_EXECUTED`.
+- Closed plugin effects on the same `SqlExecutor` chain are observation, replacing an immutable plan, and short-circuiting with a result. A replacement must keep `statementId`, SQL source, statement type, generated-key configuration, binders, row mapper, and type routing; it may change SQL text, parameters, and statement options. Short-circuit skips inner plugins and JDBC; outer observers see `NOT_EXECUTED`.
 - Plugins must not intercept JDBC prepare, bind, or mapping internals, and must not mutate generated binding or mapping.
 - Terminal callback `RuntimeException` values are logged and isolated. They neither mutate the final failure tree nor prevent remaining terminal interceptors from observing the outcome. JVM `Error` values still propagate and must not be turned into `afterFailure`.
 - Any interceptor callback adds runtime work; configure none when the direct path is preferred.
@@ -165,7 +165,9 @@ Register `ExecutionInterceptor` instances through `JdbcAssembly`, or expose them
 
 Register `CachingExecutionPlugin` with a `QueryCache` through `JdbcAssembly.plugins(...)`.
 
-- Only `execute` of `SELECT` plans is cached. Keys are `statementId` plus a defensive copy of parameter values.
+- Only `execute` of `SELECT` plans is cached. The built-in adapter keys by statement identity,
+  final SQL, active page coordinates, and a defensive copy of parameter values, so dynamic SQL,
+  providers, and different pages cannot alias one cache entry.
 - A hit short-circuits `next` and JDBC. Outer observers see `NOT_EXECUTED`.
 - A miss calls `next` unchanged and stores a successful `SqlResult`. Failures are not stored.
 - Insert, update, delete, batch, and `queryCursor` pass through. Writes do not invalidate the cache; invalidation is follow-on. This adapter is opt-in and SELECT-only.

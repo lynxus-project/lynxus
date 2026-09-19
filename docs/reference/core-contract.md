@@ -25,8 +25,10 @@ Core does not own:
 - dependency injection or Mapper bean discovery;
 - connection pooling, routing DataSource implementation, tenant or shard context;
 - declarative transaction propagation, savepoints, distributed transactions, or transaction recovery;
-- schema migration, caching, lazy loading, nested object aggregation, or a MyBatis plugin runtime;
-- SQL-dialect pagination generation. Pagination is expressed as dynamic SQL in the Mapper or provider.
+- schema migration, session-scoped cache lifecycle or invalidation, lazy loading, nested object
+  aggregation, or a MyBatis plugin runtime;
+- framework pagination models or automatic count queries. Explicit `PaginationDialect` adapters may
+  replace a SELECT plan at the `SqlExecutor` boundary.
 
 Spring integration is a host adapter. It registers generated classes and supplies Spring-aware connection participation, while the generated Mapper and `JdbcSqlExecutor` remain Spring-neutral.
 
@@ -284,12 +286,12 @@ Database-backed Core compatibility, multi-DataSource, concurrency, and transacti
 Core GA does not promise:
 
 - arbitrary OGNL or complete MyBatis XML compatibility;
-- complex `resultMap` graphs, nested collections, lazy loading, or second-level cache;
+- complex `resultMap` graphs, nested collections, lazy loading, or session-scoped/second-level cache;
 - runtime Mapper proxies, runtime XML reload, or reflection-based dispatch;
 - same-Mapper multi-DataSource binding;
-- built-in pagination plugins or a pagination DSL;
+- automatic count queries, framework pagination models, or a pagination DSL;
 - automatic retries after `OUTCOME_UNKNOWN`;
 - connection pooling, distributed transactions, or production transaction policy;
-- undocumented compiler implementation classes as public extension APIs.
+- undocumented compiler implementation classes or JDBC phase interceptors as public extension APIs.
 
 Future capabilities must preserve these ownership boundaries or update this contract with executable tests.

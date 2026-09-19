@@ -1,6 +1,5 @@
 package io.github.lynxus.jdbc;
 
-import io.github.lynxus.PluginChainContext;
 import io.github.lynxus.api.BatchExecutionPlan;
 import io.github.lynxus.api.ConnectionHandle;
 import io.github.lynxus.api.ConnectionHandleFactory;
@@ -41,10 +40,22 @@ import java.util.Objects;
 public final class JdbcSqlExecutor implements SqlExecutor {
 
     private final ConnectionHandleFactory connectionHandleFactory;
+    private final Runnable onJdbcExecuted;
     private final TypeHandlerManager typeHandlerManager = new TypeHandlerManager();
 
     public JdbcSqlExecutor(ConnectionHandleFactory connectionHandleFactory) {
+        this(connectionHandleFactory, () -> {
+        });
+    }
+
+    /**
+     * Creates an executor with an internal callback invoked after JDBC reports successful
+     * execution. The assembly uses this callback to publish execution certainty to its
+     * surrounding adapter chain; it does not change the JDBC lifecycle.
+     */
+    public JdbcSqlExecutor(ConnectionHandleFactory connectionHandleFactory, Runnable onJdbcExecuted) {
         this.connectionHandleFactory = Objects.requireNonNull(connectionHandleFactory, "connectionHandleFactory");
+        this.onJdbcExecuted = Objects.requireNonNull(onJdbcExecuted, "onJdbcExecuted");
     }
 
     @Override
@@ -220,7 +231,7 @@ public final class JdbcSqlExecutor implements SqlExecutor {
     }
 
     private JdbcExecutionState markExecuted() {
-        PluginChainContext.markJdbcExecuted();
+        onJdbcExecuted.run();
         return JdbcExecutionState.EXECUTED;
     }
 

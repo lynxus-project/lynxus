@@ -101,6 +101,22 @@ class ExecutionPluginChainTest {
                     .execute(original))
                 .getMessage());
         assertEquals(
+            "plugin cannot replace SQL source",
+            assertThrows(IllegalArgumentException.class, () ->
+                executorReplacing(plan -> new ExecutionPlan(
+                    plan.getStatementId(),
+                    plan.getSql(),
+                    plan.getParameters(),
+                    plan.getStatementType(),
+                    ExecutionPlan.SqlSource.XML,
+                    plan.getGeneratedKeyColumn(),
+                    plan.getParameterBinders(),
+                    plan.getRowMapper(),
+                    plan.getStatementOptions(),
+                    plan.getTypeRouting()))
+                    .execute(original))
+                .getMessage());
+        assertEquals(
             "plugin cannot replace parameter binders",
             assertThrows(IllegalArgumentException.class, () ->
                 executorReplacing(plan -> new ExecutionPlan(
@@ -130,6 +146,39 @@ class ExecutionPluginChainTest {
                     resultSet -> resultSet.getObject(1),
                     plan.getStatementOptions(),
                     plan.getTypeRouting()))
+                    .execute(original))
+                .getMessage());
+        assertEquals(
+            "plugin cannot replace generated-key configuration",
+            assertThrows(IllegalArgumentException.class, () ->
+                executorReplacing(plan -> new ExecutionPlan(
+                    plan.getStatementId(),
+                    plan.getSql(),
+                    plan.getParameters(),
+                    plan.getStatementType(),
+                    plan.getSourceType(),
+                    "id",
+                    plan.getParameterBinders(),
+                    plan.getRowMapper(),
+                    plan.getStatementOptions(),
+                    plan.getTypeRouting()))
+                    .execute(original))
+                .getMessage());
+        assertEquals(
+            "plugin cannot replace type routing",
+            assertThrows(IllegalArgumentException.class, () ->
+                executorReplacing(plan -> new ExecutionPlan(
+                    plan.getStatementId(),
+                    plan.getSql(),
+                    plan.getParameters(),
+                    plan.getStatementType(),
+                    plan.getSourceType(),
+                    plan.getGeneratedKeyColumn(),
+                    plan.getParameterBinders(),
+                    plan.getRowMapper(),
+                    plan.getStatementOptions(),
+                    new ExecutionPlan.TypeRouting(
+                        new Class<?>[]{String.class}, null, new Class<?>[0], null)))
                     .execute(original))
                 .getMessage());
     }

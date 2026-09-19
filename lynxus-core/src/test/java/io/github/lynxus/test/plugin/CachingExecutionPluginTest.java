@@ -1,6 +1,7 @@
 package io.github.lynxus.test.plugin;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.AfterEach;
 import io.github.lynxus.JdbcAssembly;
 import io.github.lynxus.api.BatchExecutionPlan;
 import io.github.lynxus.api.ConnectionHandle;
@@ -11,8 +12,12 @@ import io.github.lynxus.api.ExecutionPlan;
 import io.github.lynxus.api.JdbcExecutionState;
 import io.github.lynxus.api.SqlExecutor;
 import io.github.lynxus.api.SqlResult;
+import io.github.lynxus.api.PageContext;
+import io.github.lynxus.api.PageRequest;
 import io.github.lynxus.plugin.CachingExecutionPlugin;
+import io.github.lynxus.plugin.LimitOffsetPaginationDialect;
 import io.github.lynxus.plugin.MemoryQueryCache;
+import io.github.lynxus.plugin.PagingExecutionPlugin;
 
 import java.lang.reflect.Proxy;
 import java.sql.Connection;
@@ -30,6 +35,11 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class CachingExecutionPluginTest {
+
+    @AfterEach
+    void clearPageContext() {
+        PageContext.clear();
+    }
 
     @Test
     void secondIdenticalSelectDoesNotCallJdbc() {
@@ -101,6 +111,36 @@ class CachingExecutionPluginTest {
 
         assertThrows(Exception.class, () -> executor.execute(plan));
         assertThrows(Exception.class, () -> executor.execute(plan));
+        assertEquals(2, jdbcCalls.get());
+    }
+
+    @Test
+    void pageRequestParticipatesInCacheIdentityRegardlessOfPluginOrder() {
+        AtomicInteger jdbcCalls = new AtomicInteger();
+        SqlExecutor executor = JdbcAssembly.sqlExecutor(
+            countingFactory(jdbcCalls, 7L),
+            List.of(),
+            List.of(
+                new CachingExecutionPlugin(new MemoryQueryCache()),
+                new PagingExecutionPlugin(new LimitOffsetPaginationDialect())));
+        ExecutionPlan plan = selectPlan("SELECT 1", 7L);
+
+        PageContext.bind(new PageRequest(0, 1));
+        executor.execute(plan);
+        PageContext.bind(new PageRequest(1, 1));
+        executor.execute(plan);
+
+        assertEquals(2, jdbcCalls.get());
+    }
+
+    @Test
+    void finalSqlParticipatesInCacheIdentity() {
+        AtomicInteger jdbcCalls = new AtomicInteger();
+        SqlExecutor executor = cachingExecutor(countingFactory(jdbcCalls, 7L));
+
+        executor.execute(selectPlan("SELECT 1", 7L));
+        executor.execute(selectPlan("SELECT 2", 7L));
+
         assertEquals(2, jdbcCalls.get());
     }
 
