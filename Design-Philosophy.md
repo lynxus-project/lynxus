@@ -71,7 +71,7 @@ Lynxus does not expose a session abstraction and does not use runtime Mapper pro
 
 ### Keep One JDBC Lifecycle
 
-`JdbcSqlExecutor` owns the physical statement lifecycle. Standalone and hosted integrations may replace connection participation and transaction ownership, but they must not fork or reimplement statement preparation, binding, execution, result reading, mapping, cleanup, or interceptor completion.
+`JdbcSqlExecutor` owns the physical statement lifecycle and final outcome formation. Standalone and hosted integrations may replace connection participation and transaction ownership, but they must not fork or reimplement statement preparation, binding, execution, result reading, mapping, or cleanup. Terminal interceptor observation remains outside that JDBC lifecycle.
 
 Every acquired resource has one owner. Cleanup failures remain observable, original failures remain primary, and terminal observation failures do not overwrite SQL or cleanup failures.
 

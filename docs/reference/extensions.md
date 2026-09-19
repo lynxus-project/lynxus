@@ -73,7 +73,7 @@ lynxus:
 
 A host integration may provide a `ConnectionHandleFactory` that participates in host-bound connections and may own transaction commit or rollback. These are the only lifecycle responsibilities replaced by the host.
 
-`JdbcSqlExecutor` always owns statement preparation, statement options, parameter binding, SQL execution, generated-key handling, result reading, result mapping, cursor deactivation, executor-owned cleanup, final outcome formation, and terminal interceptor delivery. Spring Starter assembles and reuses that core executor; it must not copy, wrap into a second phase lifecycle, or reimplement those JDBC operations.
+`JdbcSqlExecutor` always owns statement preparation, statement options, parameter binding, SQL execution, generated-key handling, result reading, result mapping, cursor deactivation, executor-owned cleanup, and final outcome formation. The outer `InterceptingSqlExecutor` delivers terminal interceptor observations. Spring Starter assembles and reuses that executor graph; it must not copy, wrap into a second phase lifecycle, or reimplement those JDBC operations.
 
 Closing a host-aware `ConnectionHandle` releases one executor participation. It does not claim that the physical connection was closed or that the host transaction committed or rolled back. Transaction completion remains outside `ExecutionOutcome`.
 
@@ -180,7 +180,7 @@ Register `PagingExecutionPlugin` with a `PaginationDialect` through `JdbcAssembl
 - Only `execute` of `SELECT` plans is paged. Non-SELECT statements, unbound calls, and `queryCursor` pass through. The dialect appends limit/offset to the plan SQL text.
 - `LimitOffsetPaginationDialect` appends `LIMIT ? OFFSET ?` and bound limit/offset parameters. PostgreSQL and MySQL share this form. There is no automatic count query and no framework `Page<T>`.
 - Offset and limit must be non-negative. Invalid `PageRequest` fails before `next`.
-- The replacement keeps `statementId`, statement type, binders, and row mapper.
+- The replacement keeps `statementId`, SQL source, statement type, generated-key configuration, binders, row mapper, and type routing.
 
 ## Routing And Decorators
 
