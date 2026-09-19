@@ -65,6 +65,7 @@ Lynxus is a compile-time Java ORM. It moves Mapper validation, dynamic SQL compi
 - Avoid speculative abstractions, compatibility layers, and configuration switches.
 - Introduce an abstraction only when it owns a concrete invariant, isolates a volatile responsibility, or serves demonstrated current use; never add one solely for hypothetical reuse.
 - Define the observable success criteria and the command or test that proves them before implementing a non-trivial change.
+- Do not recast Non-Negotiable Architecture or Explicit Non-Goals to accommodate a feature. Put adapter contracts in `docs/reference/extensions.md`. Changing those pinned sections requires updating the goldens in `NonNegotiableArchitectureTextTest` in the same change.
 - Do not mix unrelated cleanup into a focused change.
 - Never silently swallow compiler, JDBC, cleanup, transaction, or resource failures.
 - Do not place Testcontainers or test-support dependencies on a user runtime classpath.

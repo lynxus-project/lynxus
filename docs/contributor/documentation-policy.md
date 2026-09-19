@@ -78,6 +78,8 @@ rg -n '[\p{Han}]' docs README.md 'Design-Philosophy.md' \
   --glob '!README_cn.md'
 ```
 
+Do not recast `AGENTS.md` Non-Negotiable Architecture, `Design-Philosophy.md` Explicit Non-Goals, or Core §1/§9 non-ownership lists to bless a new feature. Adapter contracts belong in `docs/reference/extensions.md`. `NonNegotiableArchitectureTextTest` pins those sections.
+
 Expected: `git diff --check` succeeds and the language scan has no output.
 
 Also verify:
