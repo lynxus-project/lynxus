@@ -20,11 +20,11 @@ final class PluginSqlExecutor implements SqlExecutor {
 
     @Override
     public SqlResult<?> execute(ExecutionPlan plan) {
-        return plugin.intercept(plan, new GuardedSqlExecutor(plan, next));
+        return plugin.intercept(plan, new PlanReplacementSqlExecutor(plan, next));
     }
 
     @Override
     public <T, R> R queryCursor(ExecutionPlan plan, CursorCallback<T, R> callback) {
-        return plugin.interceptCursor(plan, callback, new GuardedSqlExecutor(plan, next));
+        return plugin.interceptCursor(plan, callback, new PlanReplacementSqlExecutor(plan, next));
     }
 }
