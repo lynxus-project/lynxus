@@ -48,6 +48,8 @@ The runnable Native Image consumer is [`../lynxus-examples/native-image`](../lyn
 
 - [`adr/0001-separate-execution-outcome-from-transaction-completion.md`](adr/0001-separate-execution-outcome-from-transaction-completion.md)
 - [`adr/0002-keep-standard-jdbc-routing-fixed-in-core.md`](adr/0002-keep-standard-jdbc-routing-fixed-in-core.md): fixed Core JDBC routing and explicit binder/row-mapper escape hatches.
+- [`adr/0003-call-lynxus-a-compile-time-java-orm.md`](adr/0003-call-lynxus-a-compile-time-java-orm.md): public identity is a compile-time Java ORM; the comparison baseline is MyBatis, not Hibernate.
+- [`adr/0004-wrap-sql-executor-with-a-plugin-chain.md`](adr/0004-wrap-sql-executor-with-a-plugin-chain.md): executor plugins wrap `SqlExecutor`; `JdbcSqlExecutor` stays JDBC-only.
 - [`benchmarks/core-ga-baseline.md`](benchmarks/core-ga-baseline.md): reproducible Core GA benchmark evidence.
 
 The documentation site surfaces a compact MySQL benchmark snapshot directly

@@ -2,7 +2,7 @@
 
 ## Repository Purpose
 
-Lynxus is a Java 21 compile-time SQL Mapper. It generates ordinary Mapper implementations during annotation processing and executes immutable plans through a fixed JDBC runtime.
+Lynxus is a Java 21 compile-time Java ORM. It generates ordinary Mapper implementations during annotation processing and executes immutable plans through a fixed JDBC runtime.
 
 ## Current Modules
 
