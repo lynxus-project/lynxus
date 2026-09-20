@@ -1,6 +1,6 @@
 ---
 title: Extension Contracts
-description: Precise Lynxus contracts for Spring Boot versions, mapper metadata resources, typed extensions, and interceptor lifecycle.
+description: Precise Lynxus contracts for Spring Boot integration, generated Mapper metadata, typed extensions, and executor interceptor lifecycle.
 slug: docs/reference/extensions
 ---
 

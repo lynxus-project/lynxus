@@ -1,6 +1,6 @@
 ---
 title: Core Guides
-description: Core Lynxus guides for JDBC mapping, typed extensions, and standalone assembly without Spring.
+description: Core Lynxus guides for compile-time Java ORM mapping, typed extensions, and standalone JDBC assembly without Spring.
 slug: docs/user/core
 ---
 

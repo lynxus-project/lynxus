@@ -1,6 +1,6 @@
 ---
 title: MyBatis Compatibility
-description: Classify MyBatis 3.5 Mapper patterns as generated, converted, or explicitly rejected by the Lynxus compile-time SQL mapper.
+description: Classify MyBatis 3.5 Mapper patterns as generated, converted, or explicitly rejected by the Lynxus AOT-first compile-time Java ORM.
 slug: docs/reference/mybatis-compatibility
 ---
 

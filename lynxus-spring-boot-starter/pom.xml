@@ -14,7 +14,7 @@
     <packaging>jar</packaging>
 
     <name>Lynxus Spring Boot Starter</name>
-    <description>Lynxus Spring Boot auto-configuration starter</description>
+    <description>Spring Boot starter for AOT-first Java ORM Mapper registration, DataSource binding, and transactions.</description>
 
     <dependencies>
         <!-- Lynxus Core -->

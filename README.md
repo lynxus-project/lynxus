@@ -6,7 +6,7 @@
 
 [English](README.md) · [Chinese](README_cn.md)
 
-Lynxus is an AOT-first compile-time Java ORM for Java 21 applications. It validates SQL, parameters, dynamic SQL, and result mappings during compilation, then generates ordinary Java implementations with explicit JDBC execution and no runtime Mapper proxies or SQL interpreters. The generated path is suitable for applications targeting GraalVM Native Image or Spring Boot AOT, but neither is required to use Lynxus.
+Lynxus is an AOT-first compile-time Java ORM for Java 21 applications. It validates SQL, parameters, dynamic SQL, and result mappings during compilation, then generates ordinary Java Mapper implementations with explicit JDBC execution and no runtime Mapper proxies or SQL interpreters. The generated path is suitable for applications targeting GraalVM Native Image or Spring Boot AOT, but neither is required to use Lynxus.
 
 Lynxus is a pragmatic MyBatis alternative for teams that want SQL to remain visible, generated code to remain readable, and JDBC behavior to remain deterministic. It supports annotation-based and XML-based mappings, standalone JDBC, Spring Boot integration, batch operations, generated keys, and typed extension points without requiring a reflection-heavy runtime ORM.
 

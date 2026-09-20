@@ -12,7 +12,7 @@ This is the canonical documentation index. User-facing guides are grouped by pro
 
 - [`user/README.md`](user/README.md): user documentation map.
 - [`user/getting-started.md`](user/getting-started.md): installation, annotation processing, the first Mapper, and runtime assembly.
-- [`user/architecture.md`](user/architecture.md): compile-time and runtime architecture.
+- [`user/architecture.md`](user/architecture.md): AOT-first compile-time and runtime architecture.
 - [`user/aot.md`](user/aot.md): Lynxus AOT-first compilation and Native Image verification.
 - [`contribute.md`](contribute.md): contributor workflow, expectations, and AI-agent contribution guidance.
 

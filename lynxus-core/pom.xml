@@ -14,7 +14,7 @@
     <packaging>jar</packaging>
 
     <name>Lynxus Core</name>
-    <description>Lynxus runtime contracts and JDBC execution</description>
+    <description>AOT-first Java ORM runtime contracts and explicit JDBC execution for generated Mappers.</description>
 
     <dependencies>
         <!-- SLF4J for logging -->

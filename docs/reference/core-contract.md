@@ -1,6 +1,6 @@
 ---
 title: Lynxus Core GA Contract
-description: Normative Lynxus Core contract for Mapper SQL methods, JDBC execution, failures, transactions, and mapping boundaries.
+description: Normative contract for Lynxus's AOT-first Java ORM Mapper methods, JDBC execution, failures, transactions, and mapping boundaries.
 slug: docs/reference/core-contract
 ---
 

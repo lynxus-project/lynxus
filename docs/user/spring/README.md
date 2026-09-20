@@ -1,6 +1,6 @@
 ---
 title: Spring Guides
-description: Spring Boot guides for Lynxus Mapper registration, named DataSources, and transaction participation.
+description: Spring Boot guides for Lynxus AOT-first Java ORM Mapper registration, named DataSources, and transaction participation.
 slug: docs/user/spring
 ---
 

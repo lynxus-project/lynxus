@@ -1,6 +1,6 @@
 ---
-title: Quick Start for a Compile-time Java ORM
-description: Add Lynxus to Maven, generate a Mapper implementation at compile time, and run it with Spring Boot or standalone JDBC.
+title: "Quick Start: AOT-first Compile-time Java ORM"
+description: Add Lynxus to Maven, generate Java Mapper implementations at compile time, and run them with Spring Boot or standalone JDBC.
 slug: docs/user/getting-started
 ---
 

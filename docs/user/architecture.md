@@ -1,6 +1,6 @@
 ---
-title: Compile-time Java ORM Architecture
-description: Compare Lynxus and MyBatis at compile, startup, and invoke, and see how generated Mappers call explicit JDBC.
+title: AOT-first Compile-time Java ORM Architecture
+description: See how Lynxus compiles Java Mappers ahead of runtime, compares with MyBatis, and executes generated code through explicit JDBC.
 slug: docs/user/architecture
 ---
 

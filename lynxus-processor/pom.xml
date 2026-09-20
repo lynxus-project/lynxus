@@ -15,7 +15,7 @@
     <packaging>jar</packaging>
 
     <name>Lynxus Processor</name>
-    <description>Lynxus annotation processor and compile-time source generation</description>
+    <description>Java annotation processor for AOT-first compile-time Mapper validation and source generation.</description>
 
     <dependencies>
         <dependency>

@@ -9,9 +9,15 @@
     <version>1.0.0-SNAPSHOT</version>
     <packaging>pom</packaging>
 
-    <name>Lynxus Parent</name>
-    <description>High-performance compile-time ORM for Java - Parent POM</description>
-    <url>https://github.com/lynxus-project/lynxus</url>
+    <name>Lynxus: AOT-first Compile-time Java ORM</name>
+    <description>AOT-first compile-time Java ORM for Java 21 with generated Mapper implementations and explicit JDBC execution.</description>
+    <url>https://lynxus-project.github.io/</url>
+
+    <scm>
+        <connection>scm:git:https://github.com/lynxus-project/lynxus.git</connection>
+        <developerConnection>scm:git:ssh://git@github.com/lynxus-project/lynxus.git</developerConnection>
+        <url>https://github.com/lynxus-project/lynxus</url>
+    </scm>
 
     <licenses>
         <license>
